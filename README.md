@@ -24,26 +24,38 @@ Buffer will cycle, the data similar to a cicular buffer.
   The capacititor to PA4 reduces voltage flutuations.
   There is an RC filter at the end of the output.
   Audio from here will be filtered and clearer.
+  
 - Buffer
+  
   A buffer is the temproary storage area that will store the data needed for the echo.
-  It can be used in many electronics, primarily to move temporary data from one place to another. 
+  It can be used in many electronics, primarily to move temporary data from one place to another.
+  
 - ADC
+  
   An Analog-to-Digital Convertor (ADC) is a system that converts signals from the "real" world, i.e sound, into a digital output that a computer can use.
+  
 - DAC
+  
   A Digital-to-Analog Convertor (DAC) is a system that converts digital computer data into a analog, "real" signal such as sound.
+  
 - Interrupts
+  
   An interrupt is a signal to the processor. It can be emitted through software, indicating that an event needs immediate attention.
   It can halt current normal tasks if a task is needing attention.
   The code uses the systick handler, which is a Interrupt Service Routine (ISR).
   The ISR is what happens when the interrupt is toggled.
   The SysTick in the code is toggled, it starts the reading of the ADC.
+  
 - SysTick
+  
   A SysTick is a sytem timer which counts down from a set value to generate periodic interrupts at precise time intervals.
   It starts at a pre-determined value and counts down to 0.
   Then it generates the interupt.
   It reads and outputs from the ADC and DAC respectively at this frequency.
   The SysTick controls when the ADC and DAc are accessed, making it more efficient on the CPU.
+
 - Low Pass Filter
+  
   A low pass filter or RC filter allows for lower frequencys to pass through but high frequency noise to be filtered out.
 
 # Debugging
