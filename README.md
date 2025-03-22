@@ -18,33 +18,33 @@ Buffer will cycle, the data similar to a cicular buffer.
 # Theory
 - Circuit Design
   
-  Circuit has a basic DC positive bias to account for the STM L432 only reading positive voltage.
-  This is inputted into PA0.
-  All signals must be >0V & <3.3V.
-  The capacititor to PA4 reduces voltage flutuations.
-  There is an RC filter at the end of the output.
-  Audio from here will be filtered and clearer.
+    Circuit has a basic DC positive bias to account for the STM L432 only reading positive voltage.
+    This is inputted into PA0.
+    All signals must be >0V & <3.3V.
+    The capacititor to PA4 reduces voltage flutuations.
+    There is an RC filter at the end of the output.
+    Audio from here will be filtered and clearer.
   
 - Buffer
   
-  A buffer is the temproary storage area that will store the data needed for the echo.
-  It can be used in many electronics, primarily to move temporary data from one place to another.
+    A buffer is the temproary storage area that will store the data needed for the echo.
+    It can be used in many electronics, primarily to move temporary data from one place to another.
   
 - ADC
   
-  An Analog-to-Digital Convertor (ADC) is a system that converts signals from the "real" world, i.e sound, into a digital output that a computer can use.
+    An Analog-to-Digital Convertor (ADC) is a system that converts signals from the "real" world, i.e sound, into a digital output that a computer can use.
   
 - DAC
   
-  A Digital-to-Analog Convertor (DAC) is a system that converts digital computer data into a analog, "real" signal such as sound.
+    A Digital-to-Analog Convertor (DAC) is a system that converts digital computer data into a analog, "real" signal such as sound.
   
 - Interrupts
   
-  An interrupt is a signal to the processor. It can be emitted through software, indicating that an event needs immediate attention.
-  It can halt current normal tasks if a task is needing attention.
-  The code uses the systick handler, which is a Interrupt Service Routine (ISR).
-  The ISR is what happens when the interrupt is toggled.
-  The SysTick in the code is toggled, it starts the reading of the ADC.
+    An interrupt is a signal to the processor. It can be emitted through software, indicating that an event needs immediate attention.
+    It can halt current normal tasks if a task is needing attention.
+    The code uses the systick handler, which is a Interrupt Service Routine (ISR).
+    The ISR is what happens when the interrupt is toggled.
+    The SysTick in the code is toggled, it starts the reading of the ADC.
   
 - SysTick
   
@@ -76,7 +76,7 @@ The output frequency was close to 14kHz, which is not near the desired audio qua
 ![ADC good res](https://github.com/user-attachments/assets/761d9934-ebab-4d6e-8e1b-d9ab3ac7db72)
 
 Lowering the prescaler fixed this issue.
-Outputted was a sine wave which had some quantisiation, but at a acceptable frequency of 44.1kHz.
+Outputted was a sine wave which had some quantisiation, but at an acceptable frequency of 44.1kHz.
 
 Using the Echo function in the systick then created a sinewave, but playing them together meant the output was two waveforms summer together, which was visible.
 The system can now be confirmed as inputing and outputting the as intended.
