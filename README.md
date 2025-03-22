@@ -65,7 +65,11 @@ The second debugging was done via hardware on an osilloscope.
 A function was put in to the ADC.
 The original output was should be a sine wave.
 However, the ADC prescaler caused aliasing.
-This left poor resolution outputting from the DAC.
+This left poor resolution outputting from the DAC.![Echo 2](https://github.com/user-attachments/assets/770f1356-a0af-45c2-b403-23c5151726c8)
+![Echo 1](https://github.com/user-attachments/assets/b0eaf05b-08f6-4ab9-9e52-c61080af572a)
+![Aliasing](https://github.com/user-attachments/assets/fb6225cd-d480-4340-8051-4880abc12bc8)
+![ADC good res](https://github.com/user-attachments/assets/761d9934-ebab-4d6e-8e1b-d9ab3ac7db72)
+
 
 Lowering the prescaler fixed this issue.
 Outputted was a sine wave which had some quantisiation, but at a acceptable frequency.
