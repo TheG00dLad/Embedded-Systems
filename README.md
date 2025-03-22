@@ -1,4 +1,4 @@
-## Project On Building an Echo Effect For An Audio Input
+# Project On Building an Echo Effect For An Audio Input
 
 The project uses the operation of an ADC and DAC, and runs the audio through an echo effect process.
 The effects either cause a 1 second echo that follows the input, or else repeats a second behind continuously.
