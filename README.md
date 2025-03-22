@@ -15,7 +15,7 @@ Both use the same buffer, and can be switched and implemented easily.
 
 Buffer will cycle, the data similar to a cicular buffer.
 ![ES_Project1](https://github.com/user-attachments/assets/ee9ed631-32da-479b-9f7b-7a8448bb8877)
-# Theory
+## Theory
 - Circuit Design
   
     Circuit has a basic DC positive bias to account for the STM L432 only reading positive voltage.
@@ -58,7 +58,7 @@ Buffer will cycle, the data similar to a cicular buffer.
   
   A low pass filter or RC filter allows for lower frequencys to pass through but high frequency noise to be filtered out.
 
-# Debugging
+## Debugging
 Debugging was done via 2 ways. The first was creating a breakpoint in the "readADC" function.
 This verified that there was a value being read consistently from the SysTick function.
 Therefore it can be reasoned that the system will work as intended, taking in and out samples.
@@ -87,12 +87,12 @@ The system can now be confirmed as inputing and outputting the as intended.
 Results
 
 Conclusion
-# Primary Goal
+## Primary Goal
 1. To create an echo to follow the music in as a digital echo, similar to old tape echos.
 2. Make an echo effect sampled from the start to act as a background to the music currently played.
 3. Gain better understanding of ADC and DAC in C
 
-# Approach;
+## Approach;
 1. Using a function generator, determine the resolution of the ADC to DAC.
    - Here arose an issue, that the ADC started aliasing.
    - This was due to the ADC prescaler.
@@ -117,4 +117,4 @@ Conclusion
    - Echo loop playback worked too.
    - There is feedback from poor connections, and capacitor discharge, however, they can be filtered using better filters.
 
-# Conclusion
+## Conclusion
