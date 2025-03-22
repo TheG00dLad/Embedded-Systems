@@ -17,6 +17,7 @@ Buffer will cycle, the data similar to a cicular buffer.
 ![ES_Project1](https://github.com/user-attachments/assets/ee9ed631-32da-479b-9f7b-7a8448bb8877)
 # Theory
 - Circuit Design
+  
   Circuit has a basic DC positive bias to account for the STM L432 only reading positive voltage.
   This is inputted into PA0.
   All signals must be >0V & <3.3V.
