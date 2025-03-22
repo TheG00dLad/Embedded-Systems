@@ -28,11 +28,29 @@ An interrupt is a signal to the processor. It can be emitted through software, i
 It can halt current normal tasks if a task is needing attention.
 The code uses the systick handler, which is a Interrupt Service Routine (ISR).
 The ISR is what happens when the interrupt is toggled.
-The systick in the code is toggled, it starts the reading of the ADC.
-- Systick
-  
+The SysTick in the code is toggled, it starts the reading of the ADC.
+- SysTick
+  A SysTick is a sytem timer which counts down from a set value to generate periodic interrupts at precise time intervals.
+  It starts at a pre-determined value and counts down to 0.
+  Then it generates the interupt.
+  It reads and outputs from the ADC and DAC respectively at this frequency.
+  The SysTick controls when the ADC and DAc are accessed, making it more efficient on the CPU.
+
+# Debugging
+Debugging was done via 2 ways. The first was creating a breakpoint in the "readADC" function.
+This verified that there was a value being read consistently from the SysTick function.
+The second debugging was done via hardware on an osilloscope.
+A function was put in to the ADC.
+The original output was should be a sine wave.
+However, the ADC prescaler caused aliasing.
+This left poor resolution outputting from the DAC.
+
+Lowering the prescaler fixed this issue.
+Outputted was a sine wave which had some quantisiation, but at a acceptable frequency.
+
+Using the Echo function in the systick then created a sinewave, but playing them together meant the output was two waveforms summer together, which was visible.
 Results
-Methodology
+
 Conclusion
 # Primary Goal
 1. To create an echo to follow the music in as a digital echo, similar to old tape echos.
