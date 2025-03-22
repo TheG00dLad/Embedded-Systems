@@ -61,6 +61,8 @@ Buffer will cycle, the data similar to a cicular buffer.
 # Debugging
 Debugging was done via 2 ways. The first was creating a breakpoint in the "readADC" function.
 This verified that there was a value being read consistently from the SysTick function.
+Therefore it can be reasoned that the system will work as intended, taking in and out samples.
+
 The second debugging was done via hardware on an osilloscope.
 A function was put in to the ADC.
 The original output was should be a sine wave.
@@ -74,9 +76,10 @@ The output frequency was close to 14kHz, which is not near the desired audio qua
 ![ADC good res](https://github.com/user-attachments/assets/761d9934-ebab-4d6e-8e1b-d9ab3ac7db72)
 
 Lowering the prescaler fixed this issue.
-Outputted was a sine wave which had some quantisiation, but at a acceptable frequency.
+Outputted was a sine wave which had some quantisiation, but at a acceptable frequency of 44.1kHz.
 
 Using the Echo function in the systick then created a sinewave, but playing them together meant the output was two waveforms summer together, which was visible.
+The system can now be confirmed as inputing and outputting the as intended.
 
 ![Echo 2](https://github.com/user-attachments/assets/770f1356-a0af-45c2-b403-23c5151726c8)
 ![Echo 1](https://github.com/user-attachments/assets/b0eaf05b-08f6-4ab9-9e52-c61080af572a)
@@ -89,7 +92,7 @@ Conclusion
 2. Make an echo effect sampled from the start to act as a background to the music currently played.
 3. Gain better understanding of ADC and DAC in C
 
-Approach;
+# Approach;
 1. Using a function generator, determine the resolution of the ADC to DAC.
    - Here arose an issue, that the ADC started aliasing.
    - This was due to the ADC prescaler.
@@ -107,6 +110,11 @@ Approach;
    - A waveform which was the sum of 2 inputs was outputted from ADC.
    - This verified the Echo effects.
    - Testing by audio was then used to confirm effects worked as intended.
-4. 
+4. Physical Testing Of The Effects
+   - As the device was an echo pedal, it could be plugged into a audio source, such as a guitar amp.
+   - Outputting the cable into a speaker with a 3.5mm jack input allowed for the effects to be tested for their purpose.
+   - Echo delay of 1 second worked as intended.
+   - Echo loop playback worked too.
+   - There is feedback from poor connections, and capacitor discharge, however, they can be filtered using better filters.
 
 # Conclusion
