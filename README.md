@@ -1,21 +1,20 @@
 # Project On Building an Echo Effect For An Audio Input
 
 [Theory](#Theory)
+
+[Introduction](#Introduction)
+
 [Debugging](#Debugging)
+
 [Approach](#Approach)
+
 [Conclusion](#Conclusion)
-
-
-
-
-
-[Theory](#Theory)
 
 The project uses the operation of an ADC and DAC, and runs the audio through an echo effect process.
 The effects either cause a 1 second echo that follows the input, or else repeats a second behind continuously.
 
 Helper functions have been provided that handle the configuration of the pin modes (`pinMode()`), initialisation fo the ADC (`initADC()`), and reading of the ADC (`readADC()`).
-# Introduction
+## Introduction
 The goal of the project is to implement a digital audio effect processor for audio effects commonly used by musicians (e.g. echo).
 Echos are used commonly as a way to play back audio after a short delay, typically starting from 660ms to around 1500ms as technology developed.
 "Brighton Rock" by Queen is a good example of the echo effect.
