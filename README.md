@@ -14,27 +14,36 @@ Both use the same buffer, and can be switched and implemented easily.
 
 
 Buffer will cycle, the data similar to a cicular buffer.
-
+![ES_Project1](https://github.com/user-attachments/assets/ee9ed631-32da-479b-9f7b-7a8448bb8877)
 # Theory
+- Circuit Design
+  Circuit has a basic DC positive bias to account for the STM L432 only reading positive voltage.
+  This is inputted into PA0.
+  All signals must be >0V & <3.3V.
+  The capacititor to PA4 reduces voltage flutuations.
+  There is an RC filter at the end of the output.
+  Audio from here will be filtered and clearer.
 - Buffer
-A buffer is the temproary storage area that will store the data needed for the echo.
-It can be used in many electronics, primarily to move temporary data from one place to another. 
+  A buffer is the temproary storage area that will store the data needed for the echo.
+  It can be used in many electronics, primarily to move temporary data from one place to another. 
 - ADC
-An Analog-to-Digital Convertor (ADC) is a system that converts signals from the "real" world, i.e sound, into a digital output that a computer can use.
+  An Analog-to-Digital Convertor (ADC) is a system that converts signals from the "real" world, i.e sound, into a digital output that a computer can use.
 - DAC
-A Digital-to-Analog Convertor (DAC) is a system that converts digital computer data into a analog, "real" signal such as sound.
+  A Digital-to-Analog Convertor (DAC) is a system that converts digital computer data into a analog, "real" signal such as sound.
 - Interrupts
-An interrupt is a signal to the processor. It can be emitted through software, indicating that an event needs immediate attention.
-It can halt current normal tasks if a task is needing attention.
-The code uses the systick handler, which is a Interrupt Service Routine (ISR).
-The ISR is what happens when the interrupt is toggled.
-The SysTick in the code is toggled, it starts the reading of the ADC.
+  An interrupt is a signal to the processor. It can be emitted through software, indicating that an event needs immediate attention.
+  It can halt current normal tasks if a task is needing attention.
+  The code uses the systick handler, which is a Interrupt Service Routine (ISR).
+  The ISR is what happens when the interrupt is toggled.
+  The SysTick in the code is toggled, it starts the reading of the ADC.
 - SysTick
   A SysTick is a sytem timer which counts down from a set value to generate periodic interrupts at precise time intervals.
   It starts at a pre-determined value and counts down to 0.
   Then it generates the interupt.
   It reads and outputs from the ADC and DAC respectively at this frequency.
   The SysTick controls when the ADC and DAc are accessed, making it more efficient on the CPU.
+- Low Pass Filter
+  A low pass filter or RC filter allows for lower frequencys to pass through but high frequency noise to be filtered out.
 
 # Debugging
 Debugging was done via 2 ways. The first was creating a breakpoint in the "readADC" function.
@@ -77,3 +86,4 @@ Approach;
    - Testing by audio was then used to confirm effects worked as intended.
 4. 
 
+# Conclusion
