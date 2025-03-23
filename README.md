@@ -11,10 +11,6 @@
 
 [Conclusion](#Conclusion)
 
-
-![AAEMS](https://github.com/user-attachments/assets/9c72ff15-bc4f-4aa3-a060-1fbbfaf7f37b)
-
-Helper functions have been provided that handle the configuration of the pin modes (`pinMode()`), initialisation fo the ADC (`initADC()`), and reading of the ADC (`readADC()`).
 ## Introduction
 The goal of the project is to implement a digital audio effect processor for audio effects commonly used by musicians (e.g. echo).
 The project uses the operation of an ADC and DAC, and runs the audio through an echo effect process.
@@ -109,6 +105,9 @@ The system can now be confirmed as inputing and outputting the as intended.
 
 Final source of error was the uploading of the wrong enviroment to the microprocessor.
 This was an oversight and is easily avoid through correct uploading protocol.
+
+##Code Notes
+Helper functions have been provided that handle the configuration of the pin modes (`pinMode()`), initialisation for the ADC (`initADC()`), and reading of the ADC (`readADC()`).
 
 ## Approach;
 1. Using a function generator, determine the resolution of the ADC to DAC.
