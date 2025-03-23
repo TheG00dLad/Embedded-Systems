@@ -5,6 +5,10 @@
 // The interrupt handler operates by starting a conversion at one interrupt event and then reading the
 // result at the next event.  Enough time will have passed between interrupts (about 22us) for the conversion 
 // to finish (about 5 microseconds) so it will be safe to read the ADC result
+
+
+//The First Void systick is the basic echo that follows the input.
+// The Second Void Systick will create a loop of noise that repeats while allowing music to pass through.
 #include <stdbool.h>
 #include <eeng1030_lib.h>
 
@@ -15,9 +19,9 @@ int readADC();
 void initDAC();
 void writeDAC(int value);
 
-#define SAMPLE_RATE 20500  // 22kHz sampling rate
-#define BUFFER_SIZE 20500  // 0.5-second delay buffer
-#define ECHO_DECAY 0.5     // Echo decay factor
+#define SAMPLE_RATE 20500  // 20.5kHz sampling rate (Half audio quality)
+#define BUFFER_SIZE 20500  // 1-second delay buffer
+#define ECHO_DECAY 0.5     // Echo decay factor 0-1
 
 volatile bool recordingDone = false;  // Flag to indicate recording completion
 volatile uint16_t audioBuffer[BUFFER_SIZE]; // Circular buffer for delay
