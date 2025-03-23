@@ -152,4 +152,4 @@ The limited RAM led to the audio quality outputted from the DAC to not be good, 
 Another issues to arise was the noise interfering on the output, but a simple RC filter can avoid that.
 Adding a phyiscal button or a rotary encoder would be a fun improvement and add to the ability to change variables while playing music, rather than changing code.
 The project was a success with two different effects being able to be obtained using the same buffer and techniques.
-There are many further improvements that could be implemented, from user friendlyness to filters in the microcontroller.
+There are many further improvements that could be implemented, from user friendlyness to filters implemented digitally in the microcontroller.
