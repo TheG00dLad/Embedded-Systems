@@ -120,8 +120,9 @@ This first ('SysTick()') will
    - Here arose an issue, that the ADC started aliasing.
    - This was due to the ADC prescaler.
    - Moving the prescaler from 0x0f to 0x00 meant that the prescaler went from the maximum possible division of the system clock to no division.
-   - This meant it could read from 312kHz to 80 MHz
+   - This meant it could read theoretically from 312kHz to 80 MHz
    - This was verified through a ollsiloscope.
+   - However, in reality as seen in the above pictures, it was reading at around 44.1kHz, which corresponds to the systick speed.
 2. Create a buffer to log the the audio in, and save.
    - This meant that audio can be stored in the buffer.
    - The amount of audio is the sampling frequency (fs) times samples.
