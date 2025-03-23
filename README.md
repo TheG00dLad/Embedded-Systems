@@ -20,6 +20,7 @@ Echos are used commonly as a way to play back audio after a short delay, typical
 Another form of the echo effect is to loop the echo as a backing track, such as a loop pedal would do.
 Both use the same buffer, and can be switched and implemented easily.
 ![AAEMS](https://github.com/user-attachments/assets/c7966a21-ff5e-45db-ad80-502a210cd912)
+
 Pictured is an original mechanical echo, which has 2 tape heads.
 One reads and one writes.
 This can be reproduced with the ADC and DAC.
