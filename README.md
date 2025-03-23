@@ -29,11 +29,12 @@ A small echo machine would be able to echo 66ms to 150 ms.
 ### Primary Goal
 1. To create an echo to follow the music in as a digital echo, similar to old tape echos.
 2. Make an echo effect sampled from the start to act as a background to the music currently played.
-3. Gain better understanding of ADC and DAC in C
+3. Gain better understanding of ADC and DAC in C.
 
-
-Buffer will cycle, the data similar to a cicular buffer.
 ![ES_Project1](https://github.com/user-attachments/assets/ee9ed631-32da-479b-9f7b-7a8448bb8877)
+
+![425788302-99fc52a4-e186-4c1d-90fc-ae8e527c847b](https://github.com/user-attachments/assets/c72fc3ee-75f1-4be4-a186-5d4d67339cf4)
+
 ## Theory
 - Circuit Design
   
@@ -43,11 +44,13 @@ Buffer will cycle, the data similar to a cicular buffer.
     The capacititor to PA4 reduces voltage flutuations.
     There is an RC filter at the end of the output.
     Audio from here will be filtered and clearer.
+    PA0 & PA4 were decided due to their ADC & DAC capabilities.
   
 - Buffer
   
     A buffer is the temproary storage area that will store the data needed for the echo.
     It can be used in many electronics, primarily to move temporary data from one place to another.
+    The buffer will cycle, the data similar to a cicular buffer, filling and emptying the buffer with data like the old tape echo.
   
 - ADC
   
@@ -106,8 +109,11 @@ The system can now be confirmed as inputing and outputting the as intended.
 Final source of error was the uploading of the wrong enviroment to the microprocessor.
 This was an oversight and is easily avoid through correct uploading protocol.
 
-##Code Notes
+## Code Notes
 Helper functions have been provided that handle the configuration of the pin modes (`pinMode()`), initialisation for the ADC (`initADC()`), and reading of the ADC (`readADC()`).
+Two systick functions exist in the code, with one commented out.
+Both will work but only one should be used at one time.
+This first ('SysTick()') will 
 
 ## Approach;
 1. Using a function generator, determine the resolution of the ADC to DAC.
