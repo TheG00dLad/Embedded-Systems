@@ -5,10 +5,6 @@
 // The interrupt handler operates by starting a conversion at one interrupt event and then reading the
 // result at the next event.  Enough time will have passed between interrupts (about 22us) for the conversion 
 // to finish (about 5 microseconds) so it will be safe to read the ADC result
-
-
-//The First Void systick is the basic echo that follows the input.
-// The Second Void Systick will create a loop of noise that repeats while allowing music to pass through.
 #include <stdbool.h>
 #include <eeng1030_lib.h>
 
@@ -19,20 +15,21 @@ int readADC();
 void initDAC();
 void writeDAC(int value);
 
-#define SAMPLE_RATE 20500  // 20.5kHz sampling rate (Half audio quality)
-#define BUFFER_SIZE 20500  // 1-second delay buffer
-#define ECHO_DECAY 0.5     // Echo decay factor 0-1
+#define SAMPLE_RATE 22100  // 22kHz sampling rate
+#define BUFFER_SIZE 22100  // 0.5-second delay buffer
+#define ECHO_DECAY 0.9   // Echo decay factor
 
 volatile bool recordingDone = false;  // Flag to indicate recording completion
 volatile uint16_t audioBuffer[BUFFER_SIZE]; // Circular buffer for delay
 volatile uint32_t bufferIndex = 0;         // Write index
+volatile uint32_t playbackIndex = 0;
 
 int main()
 {
     setup();
     SysTick->LOAD = 1814-1; // Systick clock = 80MHz. 80000000/44100 = 1814
 	SysTick->CTRL = 7; // enable systick counter and its interrupts
-	SysTick->VAL = 10; // start from a low number so we don't wait for ages for first interrupt
+	SysTick->VAL = 10; // Using a large number to account for capacitor discharge. start from a low number so we don't wait for ages for first interrupt
 	__asm(" cpsie i "); // enable interrupts globally
     while(1)
     {
@@ -49,13 +46,13 @@ void setup()
     RCC->AHB2ENR |= (1 << 0) + (1 << 1); // enable GPIOA and GPIOB
     //pinMode(GPIOB,3,1); // make PB3 an output.
     //pinMode(GPIOA,0,1);
-    pinMode(GPIOA,0,3);  // PA3 = analog mode (ADC in)
+    pinMode(GPIOA,0,3);  // PA0 = analog mode (ADC in)
     pinMode(GPIOA,4,3);  // PA4 = analog mode (DAC out)
 
     initADC();
     initDAC();
 }
-/*void SysTick_Handler(void)
+void SysTick_Handler(void)
 {
     GPIOB->ODR ^= (1 << 3);
    DAC->DHR12R1 = ADC1->DR; // get the result from the previous conversion    
@@ -63,62 +60,45 @@ void setup()
    ADC1->CR |= (1 << 2); // start next conversion 
    GPIOB->ODR &= ~(1 << 3); // toggle PB3 for timing measurement
 //---------------------------------------------------------------------------------------
-    int16_t inputSample = readADC();   // Read input
-    int16_t delayedSample = audioBuffer[bufferIndex]; // Get delayed sample
-    int16_t outputSample = inputSample + (delayedSample * ECHO_DECAY); // Mix
+GPIOB->ODR ^= (1 << 3); // Toggle PB3 for debugging
 
-  audioBuffer[bufferIndex] = inputSample; // Store current sample
-  bufferIndex = (bufferIndex + 1) % BUFFER_SIZE; // Circular buffer wrap
+int16_t inputSample = readADC();   // Read input
+int16_t delayedSample = audioBuffer[bufferIndex]; // Get delayed sample
+int16_t outputSample = inputSample + (delayedSample * ECHO_DECAY); // Mix
 
-  writeDAC(outputSample); // Output processed signal
+audioBuffer[bufferIndex] = inputSample; // Store current sample
+bufferIndex = (bufferIndex + 1) % BUFFER_SIZE; // Circular buffer wrap
 
+writeDAC(outputSample); // Output processed signal
 //-----------------------------------------------------------------------------------------
-if (!recordingDone)  
-    {
-        // RECORD PHASE: Fill buffer until full
-        audioBuffer[bufferIndex] = readADC();
-        bufferIndex++;
-
-        if (bufferIndex >= BUFFER_SIZE)
-        {
-            bufferIndex = 0;  // Reset index for playback
-            recordingDone = true; // Stop recording
-        }
-    }
-    else
-    {
-        // PLAYBACK PHASE: Output stored samples in a loop
-        writeDAC(audioBuffer[bufferIndex]); // Output recorded sample
-        bufferIndex = (bufferIndex + 1) % BUFFER_SIZE; // Loop playback
-    }
-}*/
-
-void SysTick_Handler(void)
-{
-    int16_t inputSample = readADC();  // Read input sample
-
-    if (!recordingDone) {
-        // Store initial segment
-        audioBuffer[bufferIndex] = inputSample;
-        bufferIndex++;
-
-        if (bufferIndex >= BUFFER_SIZE) {
-            recordingDone = true;  // Stop recording after filling buffer
-            bufferIndex = 0;       // Reset to loop playback
-            GPIOB->ODR |= (1 << 3); // Debug LED ON when loop starts
-        }
-    }
-
-    int16_t loopSample = 0;
-    if (recordingDone) {
-        loopSample = audioBuffer[bufferIndex];  // Play stored sample
-        bufferIndex = (bufferIndex + 1) % BUFFER_SIZE;  // Loop playback
-    }
-    // Mix live input (noise) with looped audio
-    int16_t outputSample = (loopSample * 0.3) + (inputSample * 0.3);  // Boost loop
-
-    writeDAC(outputSample);  // Output processed sound
 }
+
+// void SysTick_Handler(void)
+// {
+//     int16_t inputSample = readADC();  // Read input sample
+
+//     if (!recordingDone) {
+//         // Store initial segment
+//         audioBuffer[bufferIndex] = inputSample;
+//         bufferIndex++;
+
+//         if (bufferIndex >= BUFFER_SIZE) {
+//             recordingDone = true;  // Stop recording after filling buffer
+//             bufferIndex = 0;       // Reset to loop playback
+//             GPIOB->ODR |= (1 << 3); // Debug LED ON when loop starts
+//         }
+//     }
+
+//     int16_t loopSample = 0;
+//     if (recordingDone) {
+//         loopSample = audioBuffer[bufferIndex];  // Play stored sample
+//         bufferIndex = (bufferIndex + 1) % BUFFER_SIZE;  // Loop playback
+//     }
+//     // Mix live input (noise) with looped audio
+//     int16_t outputSample = (loopSample * 0.3) + (inputSample * 0.6);  // Boost loop
+
+//     writeDAC(outputSample);  // Output processed sound
+// }
 void initADC()
 {
     // initialize the ADC
@@ -139,7 +119,7 @@ void initADC()
 int readADC()
 {
 
-    int rvalue=ADC1->DR; // get the result from the previous conversion    
+     int rvalue=ADC1->DR; // get the result from the previous conversion    
     ADC1->ISR = (1 << 3); // clear EOS flag
     ADC1->CR |= (1 << 2); // start next conversion    
     return rvalue; // return the result
