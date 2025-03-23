@@ -1,5 +1,6 @@
 # Project On Building an Echo Effect For An Audio Input
-##Table of Contents
+## Table of Contents
+
 [Theory](#Theory)
 
 [Introduction](#Introduction)
@@ -10,17 +11,29 @@
 
 [Conclusion](#Conclusion)
 
-The project uses the operation of an ADC and DAC, and runs the audio through an echo effect process.
-The effects either cause a 1 second echo that follows the input, or else repeats a second behind continuously.
+
+![AAEMS](https://github.com/user-attachments/assets/9c72ff15-bc4f-4aa3-a060-1fbbfaf7f37b)
 
 Helper functions have been provided that handle the configuration of the pin modes (`pinMode()`), initialisation fo the ADC (`initADC()`), and reading of the ADC (`readADC()`).
 ## Introduction
 The goal of the project is to implement a digital audio effect processor for audio effects commonly used by musicians (e.g. echo).
+The project uses the operation of an ADC and DAC, and runs the audio through an echo effect process.
+The effects either cause a 1 second echo that follows the input, or else repeats a second behind continuously.
 Echos are used commonly as a way to play back audio after a short delay, typically starting from 660ms to around 1500ms as technology developed.
 "Brighton Rock" by Queen is a good example of the echo effect.
 Another form of the echo effect is to loop the echo as a backing track, such as a loop pedal would do.
 Both use the same buffer, and can be switched and implemented easily.
+![AAEMS](https://github.com/user-attachments/assets/c7966a21-ff5e-45db-ad80-502a210cd912)
+Pictured is an original mechanical echo, which has 2 tape heads.
+One reads and one writes.
+This can be reproduced with the ADC and DAC.
+A small echo machine would be able to echo 66ms to 150 ms.
 
+
+### Primary Goal
+1. To create an echo to follow the music in as a digital echo, similar to old tape echos.
+2. Make an echo effect sampled from the start to act as a background to the music currently played.
+3. Gain better understanding of ADC and DAC in C
 
 
 Buffer will cycle, the data similar to a cicular buffer.
@@ -68,7 +81,7 @@ Buffer will cycle, the data similar to a cicular buffer.
   
   A low pass filter or RC filter allows for lower frequencys to pass through but high frequency noise to be filtered out.
 
-## Debugging
+## Debugging & Sources of Error
 Debugging was done via 2 ways. The first was creating a breakpoint in the "readADC" function.
 This verified that there was a value being read consistently from the SysTick function.
 Therefore it can be reasoned that the system will work as intended, taking in and out samples.
@@ -94,13 +107,8 @@ The system can now be confirmed as inputing and outputting the as intended.
 ![Echo 2](https://github.com/user-attachments/assets/770f1356-a0af-45c2-b403-23c5151726c8)
 ![Echo 1](https://github.com/user-attachments/assets/b0eaf05b-08f6-4ab9-9e52-c61080af572a)
 
-Results
-
-Conclusion
-## Primary Goal
-1. To create an echo to follow the music in as a digital echo, similar to old tape echos.
-2. Make an echo effect sampled from the start to act as a background to the music currently played.
-3. Gain better understanding of ADC and DAC in C
+Final source of error was the uploading of the wrong enviroment to the microprocessor.
+This was an oversight and is easily avoid through correct uploading protocol.
 
 ## Approach;
 1. Using a function generator, determine the resolution of the ADC to DAC.
