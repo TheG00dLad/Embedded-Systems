@@ -24,6 +24,7 @@ Pictured is an original mechanical echo, which has 2 tape heads.
 One reads and one writes.
 This can be reproduced with the ADC and DAC.
 A small echo machine would be able to echo 66ms to 150 ms.
+The STM L432 will be used to simiulate this mechanical device.
 
 
 ### Primary Goal
@@ -81,9 +82,9 @@ A small echo machine would be able to echo 66ms to 150 ms.
   A low pass filter or RC filter allows for lower frequencys to pass through but high frequency noise to be filtered out.
 
 ## Debugging & Sources of Error
-Debugging was done via 2 ways. The first was creating a breakpoint in the "readADC" function.
-This verified that there was a value being read consistently from the SysTick function.
-Therefore it can be reasoned that the system will work as intended, taking in and out samples.
+Debugging was done via 2 ways. The first was creating a breakpoint in the "readADC" & "writeDAC" function.
+This verified that there was a value being read and writen consistently from the SysTick function.
+Therefore it can be reasoned that the system will work as intended, taking in and putting out samples.
 
 The second debugging was done via hardware on an osilloscope.
 A function was put in to the ADC.
@@ -113,7 +114,10 @@ This was an oversight and is easily avoid through correct uploading protocol.
 Helper functions have been provided that handle the configuration of the pin modes (`pinMode()`), initialisation for the ADC (`initADC()`), and reading of the ADC (`readADC()`).
 Two systick functions exist in the code, with one commented out.
 Both will work but only one should be used at one time.
-This first ('SysTick()') will 
+This first ('SysTick()') will create an echo that follows the input.
+This will be the "echo pedal".
+The second ('SysTick()') will create an echo that will become quieter in the background to act as the backing track of the inputs.
+This will be the "loop pedal".
 
 ## Approach;
 1. Using a function generator, determine the resolution of the ADC to DAC.
@@ -128,8 +132,8 @@ This first ('SysTick()') will
    - The amount of audio is the sampling frequency (fs) times samples.
    - Each sample is 2 bytes per sample.
    - For 1 second of audio, fs = buffer size.
-   - Due to the chip having access to a limited amount of RAM, using a fs of 20500 Hz (half typical audio quality), times the buffer (20500).
-   - The total memory used was 41,000 bytes in one moment.
+   - Due to the chip having access to a limited amount of RAM, using a fs of 22500 Hz (half typical audio quality), times the buffer (22500).
+   - The total memory used was over 45,000 bytes in one moment.
 3. Verified & Debugged Using Osillscope.
    - A waveform which was the sum of 2 inputs was outputted from ADC.
    - This verified the Echo effects.
@@ -142,3 +146,10 @@ This first ('SysTick()') will
    - There is feedback from poor connections, and capacitor discharge, however, they can be filtered using better filters.
 
 ## Conclusion
+The project provided techniques available through use of the buffer, ADC, DAC and interrupts.
+The main constraint on this project was the onboard RAM.
+The limited RAM led to the audio quality outputted from the DAC to not be good, at 22.5kHz comparered to the standard 44.1kHz.
+Another issues to arise was the noise interfering on the output, but a simple RC filter can avoid that.
+Adding a phyiscal button or a rotary encoder would be a fun improvement and add to the ability to change variables while playing music, rather than changing code.
+The project was a success with two different effects being able to be obtained using the same buffer and techniques.
+There are many further improvements that could be implemented, from user friendlyness to filters in the microcontroller.
