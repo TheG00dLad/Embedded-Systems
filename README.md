@@ -15,7 +15,7 @@
 The goal of the project is to implement a digital audio effect processor for audio effects commonly used by musicians (e.g. echo).
 The project uses the operation of an ADC and DAC, and runs the audio through an echo effect process.
 The effects either cause a 1 second echo that follows the input, or else repeats a second behind continuously.
-Echos are used commonly as a way to play back audio after a short delay, typically starting from 660ms to around 1500ms as technology developed.
+Echoes are used commonly as a way to play back audio after a short delay, typically starting from 660ms to around 1500ms as technology developed.
 "Brighton Rock" by Queen is a good example of the echo effect.
 Another form of the echo effect is to loop the echo as a backing track, such as a loop pedal would do.
 Both use the same buffer, and can be switched and implemented easily.
@@ -25,11 +25,11 @@ Pictured is an original mechanical echo, which has 2 tape heads.
 One reads and one writes.
 This can be reproduced with the ADC and DAC.
 A small echo machine would be able to echo 66ms to 150 ms.
-The STM L432 will be used to simiulate this mechanical device.
+The STM L432 will be used to simulate this mechanical device.
 
 
 ### Primary Goal
-1. To create an echo to follow the music in as a digital echo, similar to old tape echos.
+1. To create an echo to follow the music in as a digital echo, similar to old tape echoes.
 2. Make an echo effect sampled from the start to act as a background to the music currently played.
 3. Gain better understanding of ADC and DAC in C.
 
@@ -43,24 +43,24 @@ The STM L432 will be used to simiulate this mechanical device.
     Circuit has a basic DC positive bias to account for the STM L432 only reading positive voltage.
     This is inputted into PA0.
     All signals must be >0V & <3.3V.
-    The capacititor to PA4 reduces voltage flutuations.
+    The capacititor to PA4 reduces voltage fluctuations.
     There is an RC filter at the end of the output.
     Audio from here will be filtered and clearer.
     PA0 & PA4 were decided due to their ADC & DAC capabilities.
   
 - Buffer
   
-    A buffer is the temproary storage area that will store the data needed for the echo.
+    A buffer is the temporary storage area that will store the data needed for the echo.
     It can be used in many electronics, primarily to move temporary data from one place to another.
-    The buffer will cycle, the data similar to a cicular buffer, filling and emptying the buffer with data like the old tape echo.
+    The buffer will cycle, the data similar to a circular buffer, filling and emptying the buffer with data like the old tape echo.
   
 - ADC
   
-    An Analog-to-Digital Convertor (ADC) is a system that converts signals from the "real" world, i.e sound, into a digital output that a computer can use.
+    An Analog-to-Digital Converter (ADC) is a system that converts signals from the "real" world, i.e sound, into a digital output that a computer can use.
   
 - DAC
   
-    A Digital-to-Analog Convertor (DAC) is a system that converts digital computer data into a analog, "real" signal such as sound.
+    A Digital-to-Analog Converter (DAC) is a system that converts digital computer data into a analog, "real" signal such as sound.
   
 - Interrupts
   
@@ -72,7 +72,7 @@ The STM L432 will be used to simiulate this mechanical device.
   
 - SysTick
   
-  A SysTick is a sytem timer which counts down from a set value to generate periodic interrupts at precise time intervals.
+  A SysTick is a system timer which counts down from a set value to generate periodic interrupts at precise time intervals.
   It starts at a pre-determined value and counts down to 0.
   Then it generates the interupt.
   It reads and outputs from the ADC and DAC respectively at this frequency.
@@ -80,17 +80,17 @@ The STM L432 will be used to simiulate this mechanical device.
 
 - Low Pass Filter
   
-  A low pass filter or RC filter allows for lower frequencys to pass through but high frequency noise to be filtered out.
+  A low pass filter or RC filter allows for lower frequencies to pass through but high frequency noise to be filtered out.
 
 ## Debugging & Sources of Error
 Debugging was done via 2 ways. The first was creating a breakpoint in the "readADC" & "writeDAC" function.
 This verified that there was a value being read and writen consistently from the SysTick function.
 Therefore it can be reasoned that the system will work as intended, taking in and putting out samples.
 
-The second debugging was done via hardware on an osilloscope.
+The second debugging was done via hardware on an oscilloscope.
 A function was put in to the ADC.
 The original output was should be a sine wave.
-However, the ADC prescaler caused aliasing.
+However, the ADC prescaler, which caused aliasing.
 This left poor resolution outputting from the DAC.
 
 ![Aliasing](https://github.com/user-attachments/assets/fb6225cd-d480-4340-8051-4880abc12bc8)
@@ -100,15 +100,15 @@ The output frequency was close to 14kHz, which is not near the desired audio qua
 ![ADC good res](https://github.com/user-attachments/assets/761d9934-ebab-4d6e-8e1b-d9ab3ac7db72)
 
 Lowering the prescaler fixed this issue.
-Outputted was a sine wave which had some quantisiation, but at an acceptable frequency of 44.1kHz.
+Outputted was a sine wave which had some quantiziation, but at an acceptable frequency of 44.1kHz.
 
-Using the Echo function in the systick then created a sinewave, but playing them together meant the output was two waveforms summer together, which was visible.
-The system can now be confirmed as inputing and outputting the as intended.
+Using the Echo function in the systick then created a sinewave, but playing them together meant the output was two waveforms summed together, which was visible.
+The system can now be confirmed as inputting and outputting the as intended.
 
 ![Echo 2](https://github.com/user-attachments/assets/770f1356-a0af-45c2-b403-23c5151726c8)
 ![Echo 1](https://github.com/user-attachments/assets/b0eaf05b-08f6-4ab9-9e52-c61080af572a)
 
-Final source of error was the uploading of the wrong enviroment to the microprocessor.
+Final source of error was the uploading of the wrong environment to the microprocessor.
 This was an oversight and is easily avoid through correct uploading protocol.
 
 ## Code Notes
@@ -126,16 +126,16 @@ This will be the "loop pedal".
    - This was due to the ADC prescaler.
    - Moving the prescaler from 0x0f to 0x00 meant that the prescaler went from the maximum possible division of the system clock to no division.
    - This meant it could read theoretically from 312kHz to 80 MHz
-   - This was verified through a ollsiloscope.
+   - This was verified through a oscilloscope.
    - However, in reality as seen in the above pictures, it was reading at around 44.1kHz, which corresponds to the systick speed.
 2. Create a buffer to log the the audio in, and save.
    - This meant that audio can be stored in the buffer.
    - The amount of audio is the sampling frequency (fs) times samples.
    - Each sample is 2 bytes per sample.
    - For 1 second of audio, fs = buffer size.
-   - Due to the chip having access to a limited amount of RAM, using a fs of 22500 Hz (half typical audio quality), times the buffer (22500).
+   - Due to the chip having access to a limited acces to avaialable RAM it required an fs of 22500 Hz (half typical audio quality), times the buffer (22500), which was the memory used.
    - The total memory used was over 45,000 bytes in one moment.
-3. Verified & Debugged Using Osillscope.
+3. Verified & Debugged Using Oscillscope.
    - A waveform which was the sum of 2 inputs was outputted from ADC.
    - This verified the Echo effects.
    - Testing by audio was then used to confirm effects worked as intended.
@@ -145,12 +145,15 @@ This will be the "loop pedal".
    - Echo delay of 1 second worked as intended.
    - Echo loop playback worked too.
    - There is feedback from poor connections, and capacitor discharge, however, they can be filtered using better filters.
+5. Playing Music With The Effects
+   - Music can now be played with the effects from the code.
+   - Evidence avaialable here: https://youtu.be/Y0iyguO1O4A
 
 ## Conclusion
 The project provided techniques available through use of the buffer, ADC, DAC and interrupts.
 The main constraint on this project was the onboard RAM.
 The limited RAM led to the audio quality outputted from the DAC to not be good, at 22.5kHz comparered to the standard 44.1kHz.
 Another issues to arise was the noise interfering on the output, but a simple RC filter can avoid that.
-Adding a phyiscal button or a rotary encoder would be a fun improvement and add to the ability to change variables while playing music, rather than changing code.
+Adding a physical button or a rotary encoder would be a fun improvement and add to the ability to change variables while playing music, rather than changing code.
 The project was a success with two different effects being able to be obtained using the same buffer and techniques.
 There are many further improvements that could be implemented, from user friendlyness to filters implemented digitally in the microcontroller.
