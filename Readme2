@@ -4,3 +4,17 @@ Pins needed to be set
 Getting a vairable as set by the encoder
 "Wipping" of LCD display as encoder setting was changed.
 Issue with the systick timer and the LCD timer being called at the same time.
+
+
+    // EXTI->FTSR1 |= (1 << 4); // select falling edge trigger for PB4 input
+    // EXTI->IMR1 |= (1 << 4);  // enable PB4 interrupt
+    // NVIC->ISER[0] |= (1 << 10); // IRQ 10 maps to EXTI4
+
+using the EXTI on PB4 causes a polling issue and shutdown the fprint when working on the encoder.
+
+Spent 4 hours debugging the set up, the pins for PA5 and PA4 did not like being changed to PB6 and PB1.
+Why is that?
+
+E_S image 1 error appeared, why is that?
+
+getting caught in mode 0?
