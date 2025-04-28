@@ -21,3 +21,5 @@ getting caught in mode 0?
 --Restored to previous code
 
 Percent_int, the original variable is causing issues on the classic IO ADC 2 DAC. Why is that?
+
+DMA - Is timer 7 counting? - Check breakpoint.
