@@ -1,4 +1,19 @@
 # Specialist Embedded Systems Project : Guitar Effects Pedal With Controller, DMA, Rotary Encoder and LCD
+## Table Of Contents
+1. [Introduction](#introduction)  
+2. [Schematic](#schematic)  
+3. [LCD](#lcd)  
+4. [Rotary Encoder](#rotary-encoder)  
+5. [DMA](#dma)  
+6. [Double Buffering](#double-buffering)  
+7. [USART2](#usart2)  
+8. [Timers](#timers)  
+9. [Testing](#testing)  
+10. [Debugging](#debugging)  
+11. [Demonstration](#demonstration)  
+12. [Ethical Considerations](#ethical-considerations)  
+13. [Conclusion](#conclusion)
+
 ## Introduction
 The goal of this project was to improve upon the shortcomings of the previous guitar pedal design. 
 The main issues to arise during the previous pedal was sampling frequency, as it was too slow for any real sound quality, only producing at about 30Khz, at max speed, which was due to the systick.
