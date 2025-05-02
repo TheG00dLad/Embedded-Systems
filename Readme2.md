@@ -10,7 +10,7 @@ Finally to get better speeds, and bring up the standard of the audio, use of the
 Due to the pure direct signalling of DMA, double buffering had to be used as a way to alter the live value.
 This was not an inbuilt feature of the l432 microprocesser, but using a buffer as a way to store and edit memory with half-transfers allowed it to be possible.
 
-- LCD 
+# LCD 
 An Licquid Crystal Display (LCD) is a flat-panel display.
 It uses liquid crystals that modulate light to create images and is common in TV's.
 The LCD uses a backlight to illuminate the crystals.
@@ -21,16 +21,17 @@ Adding a small rectangle starting from the left and making it "grow" to the righ
 To add colour to the text or shape used, RGB codes of the colour were used. 
 Careful consideration, aswell as trial and error can be used to match colours.
 Using a RGB code reference for colours can be a useful tool, and easily called with (XXX,YYY,ZZZ).
-https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.linsnled.com%2Fdifference-between-lcd-and-led.html&psig=AOvVaw3LcaP_Jem97OfHqLf6a9eg&ust=1746281332129000&source=images&cd=vfe&opi=89978449&ved=0CBAQjRxqFwoTCLi08eP7hI0DFQAAAAAdAAAAABAE
+![LCD-Screen-Technology](https://github.com/user-attachments/assets/671eaa26-7662-4b65-bfd7-393951c3a662)
+
 The current model used was the ST7735S, which has a resolution of 160x80, and a SPI interface, using SPI MOSI and SPI SCLK.
-- Rotary Encoder
+# Rotary Encoder
 A rotary encoder is commonly found on car radios.
 It provides a very simple and intuitive left-right directions, as well as a tertiary function on a button press.
 It is an electromechanical device that rotates the rotational motion of a shaft into a clock signal.
 Matching the signal against a reference clock, it will be capable of providing information of position, speed and direction.
 This project will only use position and direction, as the sensitivity is not as fine as it would need to be to desire the use of speed. CHECK THIS PART BRO.
 The rotary encoder, as it uses TIM2, is therefore not using any CPU polling, which allows for greater effiency.
-- DMA
+# DMA
 Direct Memory Access (DMA) is a feature in microcontrollers or computers that allows either peripherals, or memory, to transfer to another place without any CPU involvement.
 On the L432, there is 4 types, Peripheral to Memory, Memory to Peripheral, Memory to Memory, and Peripheral to Peripheral.
 It is based on the speed of a seperate clock rather than a system like the Systick, which is dependant on the CPU.
