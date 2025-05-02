@@ -43,6 +43,9 @@ A systick code was set up, compared to a peripheral to peripheral DMA setup.
 ![TEK00001](https://github.com/user-attachments/assets/16c276cc-c6c4-429a-a47f-7e4ab50002cb)
 ![TEK00002](https://github.com/user-attachments/assets/1ca19286-4941-4b1f-8f07-088e126f9bb8)
 
+Image 1 was the default systick, sampling at a supposed 44.1KHz. 
+The second image was when the systick passthrough was set to 400, meaning it ran at 200KHz.
+The third image is the periperhal to peripheral DMA, which attained a greater resolution.
 As visibile on the oscilloscope readings, there is a far greater resolution on DMA versus systick, even when the systick was set to a value of 400.
 Calling DMA is a large task.
 To call it, alot of use of the reference manual for the STM32L43XXX Arm-based 32 MCUs was needed.
@@ -115,6 +118,9 @@ It could be assumed that it was due to the clock speed of the interrupts, and th
 
 ![TEK00000](https://github.com/user-attachments/assets/ff042cc7-0b89-43c7-9abf-ee9513e5d677)
 ![TEK00001](https://github.com/user-attachments/assets/8c51c586-f085-4280-b151-a8c4d43b9edf)
+
+![image](https://github.com/user-attachments/assets/6e8e0d11-a798-4561-b031-1fa5436b1285)
+This result was the final version of the code, able to accurately reproduce waveforms at a speed of almost 100KHz.
 - Conclusion
 The project suffers from audible interference.
 More than likely it is due to the electrical tape on the audio cables, as proper shrink wrap or other forms of insulation with little to no movement would create less interfernce.
