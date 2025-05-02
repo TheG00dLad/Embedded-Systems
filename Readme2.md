@@ -1,5 +1,5 @@
-## README 2
-# Introduction
+# Specialist Embedded Systems Project : Guitar Effects Pedal With Controller, DMA, Rotary Encoder and LCD
+## Introduction
 The goal of this project was to improve upon the shortcomings of the previous guitar pedal design. 
 The main issues to arise during the previous pedal was sampling frequency, as it was too slow for any real sound quality, only producing at about 30Khz, at max speed, which was due to the systick.
 The second issue to arise was the lack of functionality in the previous code, with any effects being manually coded in, and no live adjustments possible.
@@ -8,8 +8,11 @@ To edit it with live adjustments back and foward, in addition to changing modes,
 Finally to get better speeds, and bring up the standard of the audio, use of the DMA abilities in the  STM43 L432kc were crucial in the project. 
 Due to the pure direct signalling of DMA, double buffering had to be used as a way to alter the live value.
 This was not an inbuilt feature of the l432 microprocesser, but using a buffer as a way to store and edit memory with half-transfers allowed it to be possible.
+The L432kc was a good choice of controller due to the high speed processing power.
+With a 12 bit ADC and DAC, and access to 2 DMA's, with 14 combined channels, it can be effective for designing some audio effects.
+Adding a rotary encoder and a lcd to the project were brought about due to the previous project's lack of a UI, and therefore they improved the new systems usefullness.
 
-# Schematic
+## Schematic
 ![image](https://github.com/user-attachments/assets/ee81a6e5-8f30-4811-96ab-82b986933808)
 
 This schematic was the basis of my design which allowed for constant referencing through the design stage.
@@ -107,6 +110,7 @@ It substituted the LCD display as a way of measuring position.
 
 ## Timers
 The timers on the ADC and DAC, using DMA, allowed for it to sample data far faster, by setting the timer to 800Khz, it was able to accurately visualise a sine wave at above 100KHz. 
+There was an issue arising with TIM2, as the LCD and systick were both reliant on timer 2 originally, however moving the systick to be use the milliseconds changed this.
 However, there was interference, but it was above the audible range, as it was at around 1 MHz.
 This is quite possible just swithing noise or artifacts left on the scope due to the high frequency components.
 It should be noted the ADC and DAC may not be able to sample at that speed, it was simply the fastest speed attained through use of the oscillscope to see how accurate and how fast I could read a signal.
@@ -116,13 +120,14 @@ It should be noted the ADC and DAC may not be able to sample at that speed, it w
 The circuit was able to be tested under different enviroments.
 By testing a sinewave at 3.3V, and raising the volume, measure, it could go from no output to a full repeat of the wave, and was visible on the oscilloscope.
 The below image demonstrates the volume attenuation.
+Here the yellow is the input, and blue is the output.
 ![image](https://github.com/user-attachments/assets/e2efdbb6-5527-457a-8a6b-44bad039b912)
 
 To test the distortion effect, it was given the same treatment, however the distortion lead to clipping as it started to try sum sinewaves.
 There was a problem that without a variable that stated "if (audio > 4096); audio = 4096".
 This stopped the DAC outputting 0 when it went too high on the input.
 The passthrough was testing though simple visually inspecting the oscilloscope.
-Below shows the waveform flattening out, aswell as the slightly larger waveform compared to a simple volume control passthrough.
+Below shows the waveform flattening out, aswell as the slightly larger waveform compared to a simple volume control passthrough, with the blue waveform as the input, and yellow as the output.
 ![image](https://github.com/user-attachments/assets/b2449089-24c6-44ba-938c-036850e729fd)
 
 
@@ -166,27 +171,13 @@ Humans can only hear up to around 20KHz, hence why the sampling rate of audio on
 
 ![image](https://github.com/user-attachments/assets/6e8e0d11-a798-4561-b031-1fa5436b1285)
 This result was the final version of the code, able to accurately reproduce waveforms at a speed of almost 100KHz.
+# Ethical Considerations
+A strong consideration for the product was reliability, as products should be able to work reliably with any consumer without the consumer needing to know about software debugging.
+Another consideration was the ease of use, hence the three uses of the controller.
+Having a distortion effect, a volume control and a passthrough all controllable by the encoder's single button make it easy for any potential user to figure out easily.
+Future work would involve a simple debouncing program, as that was the only main issue at the time of finishing was that sometimes the encoder could debounce, even with a large delay.
 # Conclusion
 The project suffers from audible interference.
 More than likely it is due to the electrical tape on the audio cables, as proper shrink wrap or other forms of insulation with little to no movement would create less interfernce.
 
-Issues
-Pins needed to be set - diagram
-Getting a vairable as set by the encoder - counter to tim2
-"Wipping" of LCD display as encoder setting was changed.
-Issue with the systick timer and the LCD timer being called at the same time. - Switched the LCD timer
-
-
-
-
-    // EXTI->FTSR1 |= (1 << 4); // select falling edge trigger for PB4 input
-    // EXTI->IMR1 |= (1 << 4);  // enable PB4 interrupt
-    // NVIC->ISER[0] |= (1 << 10); // IRQ 10 maps to EXTI4
-
-using the EXTI on PB4 causes a polling issue and shutdown the fprint when working on the encoder.
-
-Why is that?
-
-E_S image 1 error appeared, why is that?
-
-DMA - Is timer 7 counting? - Check breakpoint.
+#
