@@ -128,6 +128,7 @@ There was a problem that without a variable that stated "if (audio > 4096); audi
 This stopped the DAC outputting 0 when it went too high on the input.
 The passthrough was testing though simple visually inspecting the oscilloscope.
 Below shows the waveform flattening out, as well as the slightly larger waveform compared to a simple volume control passthrough, with the blue waveform as the input, and yellow as the output.
+
 ![image](https://github.com/user-attachments/assets/b2449089-24c6-44ba-938c-036850e729fd)
 
 
