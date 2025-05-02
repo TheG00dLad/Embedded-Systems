@@ -29,6 +29,7 @@ Adding a small rectangle starting from the left and making it "grow" to the righ
 To add colour to the text or shape used, RGB codes of the colour were used. 
 Careful consideration, as well as trial and error can be used to match colours.
 Using a RGB code reference for colours can be a useful tool, and easily called with (XXX,YYY,ZZZ).
+
 ![LCD-Screen-Technology](https://github.com/user-attachments/assets/671eaa26-7662-4b65-bfd7-393951c3a662)
 
 The current model used was the ST7735S, which has a resolution of 160x80, and a SPI interface, using SPI MOSI and SPI SCLK.
@@ -49,6 +50,7 @@ Therefore, when adding an effect, it can actually slow down the processing, and 
 With audio, which should be at 44.1KHz, high speeds are necessary.
 Testing was done with DMA first to determine if DMA was truly greater than a very fast systick.
 A systick code was set up, compared to a peripheral-to-peripheral DMA setup.
+
 ![TEK00000](https://github.com/user-attachments/assets/b410cd4c-deb4-40e8-9997-0a611acadd9f)
 ![TEK00001](https://github.com/user-attachments/assets/16c276cc-c6c4-429a-a47f-7e4ab50002cb)
 ![TEK00002](https://github.com/user-attachments/assets/1ca19286-4941-4b1f-8f07-088e126f9bb8)
