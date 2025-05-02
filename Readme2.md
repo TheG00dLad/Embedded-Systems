@@ -47,6 +47,7 @@ Calling DMA is a large task.
 To call it, alot of use of the reference manual for the STM32L43XXX Arm-based 32 MCUs was needed.
 Chapter 11 is dedicated to DMA.
 ![image](https://github.com/user-attachments/assets/92524a20-0b7f-43c3-9426-117782597d2a)
+
 DMA works by;
 1. The DMA is configures at it's channel level, composed of a sequence of AHB bus transfers.
 2. To transfer, a peripheral sends a single DMA request to the DMA controller.
@@ -63,7 +64,7 @@ There is a circular mode, which is able to hand circular buffers and continuous 
 However, the final issue is the need to access the buffer at any instance, so that the effect can be altered, such as volume.
 This led to the need of double buffering.
 
-- Double Buffering
+# Double Buffering
 Double buffering is commonly used in computer graphics, seen in technology such as VSync on videogames to smooth screen tearing.
 On monitors it will synchronise the framerate with the displays refresh rate, which is typically 144Hz.
 For two buffers, a front buffer is displayed on the screen, and the second buffer is used to render the next frame.
@@ -87,21 +88,28 @@ At the same time the DMA is able to send out the first half through the DAC.
 The ADC then wraps around the the process repeats.
 Hence it ping-pongs.
 
--USART2
+# USART2
 The use of USART2 was crucial to the production of the project, as it allowed for debugging using printf. This allowed for the development of the decoder, as it could show if the button was pressed, or if it was counting up and down.
 It also read the DAC and ADC, and could display any features yet to be implemented.
 It substituted the LCD display as a way of measuring position.
 
-- Timers
+# Timers
 The timers on the ADC and DAC, using DMA, allowed for it to sample data far faster, by setting the timer to 800Khz, it was able to accurately visualise a sine wave at above 100KHz. However there was interference, but it was above the audible range, as it was at around 1 MHz.
 
-- Schematic
+# Schematic
 
-- Testing
+# Testing
 The circuit was able to be tested under different enviroments
--Problems
+# Debugging
+There we some notable issues in the debugging process. An interrupt in the delay_ms combined with the DMA caused the code to crash inside the delay.
+This would happen in the while loop, as the asm("wfi") interrupt was never triggered. 
+As a result it crashed. 
+By commenting out the place it got stuck, the code worked.
+It could be assumed that it was due to the clock speed of the interrupts, and the DMA system not being quite on the same stage, as it would only happen on varying times after using the decoder too fast, causing it to updata quickly.
+![image](https://github.com/user-attachments/assets/c8af4fc1-b4f8-4dbd-b5ba-0570fadda8e4)
 
-- Demonstration
+
+# Demonstration
 - Conclusion
 The project suffers from audible interference.
 More than likely it is due to the electrical tape on the audio cables, as proper shrink wrap or other forms of insulation with little to no movement would create less interfernce.
