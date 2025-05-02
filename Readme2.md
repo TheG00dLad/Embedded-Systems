@@ -164,13 +164,16 @@ This was then able to be used for the distortion effect too, as the encoder coul
 ## Demonstration
 
 ![TEK00000](https://github.com/user-attachments/assets/ff042cc7-0b89-43c7-9abf-ee9513e5d677)
+
 ![TEK00001](https://github.com/user-attachments/assets/8c51c586-f085-4280-b151-a8c4d43b9edf)
+
 These images are proof of the output power of the DMA system.
 The interference seen at jumping around the sine wave is miniscule compared to the original systick.
 It can be calculated to be at around 1MHz, which is beyond audible.
 Humans can only hear up to around 20KHz, hence why the sampling rate of audio on CDs is 44.1KHz, to avoid any aliasing.
 
 ![image](https://github.com/user-attachments/assets/6e8e0d11-a798-4561-b031-1fa5436b1285)
+
 This result was the final version of the code, able to accurately reproduce waveforms at a speed of almost 100KHz.
 # Ethical Considerations
 A strong consideration for the product was reliability, as products should be able to work reliably with any consumer without the consumer needing to know about software debugging.
