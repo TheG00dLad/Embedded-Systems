@@ -9,7 +9,13 @@ Finally to get better speeds, and bring up the standard of the audio, use of the
 Due to the pure direct signalling of DMA, double buffering had to be used as a way to alter the live value.
 This was not an inbuilt feature of the l432 microprocesser, but using a buffer as a way to store and edit memory with half-transfers allowed it to be possible.
 
-# LCD 
+# Schematic
+![image](https://github.com/user-attachments/assets/ee81a6e5-8f30-4811-96ab-82b986933808)
+
+This schematic was the basis of my design which allowed for constant referencing through the design stage.
+This was pivotal to the system design.
+
+## LCD 
 An Licquid Crystal Display (LCD) is a flat-panel display.
 It uses liquid crystals that modulate light to create images and is common in TV's.
 The LCD uses a backlight to illuminate the crystals.
@@ -23,14 +29,14 @@ Using a RGB code reference for colours can be a useful tool, and easily called w
 ![LCD-Screen-Technology](https://github.com/user-attachments/assets/671eaa26-7662-4b65-bfd7-393951c3a662)
 
 The current model used was the ST7735S, which has a resolution of 160x80, and a SPI interface, using SPI MOSI and SPI SCLK.
-# Rotary Encoder
+## Rotary Encoder
 A rotary encoder is commonly found on car radios.
 It provides a very simple and intuitive left-right directions, as well as a tertiary function on a button press.
 It is an electromechanical device that rotates the rotational motion of a shaft into a clock signal.
 Matching the signal against a reference clock, it will be capable of providing information of position, speed and direction.
-This project will only use position and direction, as the sensitivity is not as fine as it would need to be to desire the use of speed. CHECK THIS PART BRO.
+This project will only use position and direction, as the sensitivity is not as fine as it would need to be to desire the use of speed.
 The rotary encoder, as it uses TIM2, is therefore not using any CPU polling, which allows for greater effiency.
-# DMA
+## DMA
 Direct Memory Access (DMA) is a feature in microcontrollers or computers that allows either peripherals, or memory, to transfer to another place without any CPU involvement.
 On the L432, there is 4 types, Peripheral to Memory, Memory to Peripheral, Memory to Memory, and Peripheral to Peripheral.
 It is based on the speed of a seperate clock rather than a system like the Systick, which is dependant on the CPU.
@@ -69,7 +75,7 @@ There is a circular mode, which is able to hand circular buffers and continuous 
 However, the final issue is the need to access the buffer at any instance, so that the effect can be altered, such as volume.
 This led to the need of double buffering.
 
-# Double Buffering
+## Double Buffering
 Double buffering is commonly used in computer graphics, seen in technology such as VSync on videogames to smooth screen tearing.
 On monitors it will synchronise the framerate with the displays refresh rate, which is typically 144Hz.
 For two buffers, a front buffer is displayed on the screen, and the second buffer is used to render the next frame.
@@ -93,19 +99,19 @@ At the same time the DMA is able to send out the first half through the DAC.
 The ADC then wraps around the the process repeats.
 Hence it ping-pongs.
 
-# USART2
+## USART2
 The use of USART2 was crucial to the production of the project, as it allowed for debugging using printf. This allowed for the development of the decoder, as it could show if the button was pressed, or if it was counting up and down.
 It also read the DAC and ADC, and could display any features yet to be implemented.
 It substituted the LCD display as a way of measuring position.
 
-# Timers
+## Timers
 The timers on the ADC and DAC, using DMA, allowed for it to sample data far faster, by setting the timer to 800Khz, it was able to accurately visualise a sine wave at above 100KHz. However there was interference, but it was above the audible range, as it was at around 1 MHz.
 
-# Schematic
 
-# Testing
+
+## Testing
 The circuit was able to be tested under different enviroments
-# Debugging
+## Debugging
 There we some notable issues in the debugging process. An interrupt in the delay_ms combined with the DMA caused the code to crash inside the delay.
 This would happen in the while loop, as the asm("wfi") interrupt was never triggered. 
 As a result it crashed. 
@@ -113,15 +119,35 @@ By commenting out the place it got stuck, the code worked.
 It could be assumed that it was due to the clock speed of the interrupts, and the DMA system not being quite on the same stage, as it would only happen on varying times after using the decoder too fast, causing it to updata quickly.
 ![image](https://github.com/user-attachments/assets/c8af4fc1-b4f8-4dbd-b5ba-0570fadda8e4)
 
+Another issue to arise was when switching modes, some modes either would not call or would switch, and do nothing.
+With 3 modes, 0,1 and 2, it should ideally be able to switch easily.
+However the code would not switch into mode 2 after switching from mode 0 to 1.
+A breakpoint was put into the mode 2, which then ran.
+It happened to be that the mode switching got commented out.
+This made for a simple use of breakpoint, and demonstrated it's usefulness.
 
-# Demonstration
+The the final major bug found in the project was when the DMA was outputting what looked to be "the average part of a waveform".
+It demonstrated clear interference with any waveform, and had this unique jumping to a certain level of the output displayed on the oscilloscope.
+![image](https://github.com/user-attachments/assets/83a753c2-a2ca-4df3-a3f2-297ad5673c4a)
+This image is what happened when a triangle wave was put through.
+Changing the size of the buffer made the distance between the lines more seperate in the oscilloscope.
+This was due to the use of a float to remember the position of the rotary encoder.
+Floating point operations would be called constantly in the loop, required computational power which slowed down the output greater.
+Switching the value of the volume multiplier to use fixed point arithmetic provided a far greater performance boost.
+This was then able to be used for the distortion effect too, as the encoder could easily set a value without causing any further errors.
+
+## Demonstration
 
 ![TEK00000](https://github.com/user-attachments/assets/ff042cc7-0b89-43c7-9abf-ee9513e5d677)
 ![TEK00001](https://github.com/user-attachments/assets/8c51c586-f085-4280-b151-a8c4d43b9edf)
+These images are proof of the output power of the DMA system.
+The interference seen at jumping around the sine wave is miniscule compared to the original systick.
+It can be calculated to be at around 1MHz, which is beyond audible.
+Humans can only hear up to around 20KHz, hence why the sampling rate of audio on cds is 44.1KHz, to avoid any aliasing.
 
 ![image](https://github.com/user-attachments/assets/6e8e0d11-a798-4561-b031-1fa5436b1285)
 This result was the final version of the code, able to accurately reproduce waveforms at a speed of almost 100KHz.
-- Conclusion
+# Conclusion
 The project suffers from audible interference.
 More than likely it is due to the electrical tape on the audio cables, as proper shrink wrap or other forms of insulation with little to no movement would create less interfernce.
 
