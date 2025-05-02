@@ -1,6 +1,5 @@
-README 2
-
-- Introduction
+## README 2
+# Introduction
 The goal of this project was to improve upon the shortcomings of the previous guitar pedal design. 
 The main issues to arise during the previous pedal was sampling frequency, as it was too slow for any real sound quality, only producing at about 30Khz, at max speed, which was due to the systick.
 The second issue to arise was the lack of functionality in the previous code, with any effects being manually coded in, and no live adjustments possible.
@@ -40,8 +39,10 @@ Therefore when adding an effect, it can actually slow down the processing, and h
 With audio, which should be at 44.1KHz, high speeds are necessary.
 Testing was done with DMA first to determine if DMA was truly greater than a very fast systick.
 A systick code was set up, compared to a peripheral to peripheral DMA setup.
-[INSERT IMAGE OF SYSTICK]
-[INSERT IMAGE OF DMA P2P]
+![TEK00000](https://github.com/user-attachments/assets/b410cd4c-deb4-40e8-9997-0a611acadd9f)
+![TEK00001](https://github.com/user-attachments/assets/16c276cc-c6c4-429a-a47f-7e4ab50002cb)
+![TEK00002](https://github.com/user-attachments/assets/1ca19286-4941-4b1f-8f07-088e126f9bb8)
+
 As visibile on the oscilloscope readings, there is a far greater resolution on DMA versus systick, even when the systick was set to a value of 400.
 Calling DMA is a large task.
 To call it, alot of use of the reference manual for the STM32L43XXX Arm-based 32 MCUs was needed.
@@ -110,6 +111,9 @@ It could be assumed that it was due to the clock speed of the interrupts, and th
 
 
 # Demonstration
+
+![TEK00000](https://github.com/user-attachments/assets/ff042cc7-0b89-43c7-9abf-ee9513e5d677)
+![TEK00001](https://github.com/user-attachments/assets/8c51c586-f085-4280-b151-a8c4d43b9edf)
 - Conclusion
 The project suffers from audible interference.
 More than likely it is due to the electrical tape on the audio cables, as proper shrink wrap or other forms of insulation with little to no movement would create less interfernce.
