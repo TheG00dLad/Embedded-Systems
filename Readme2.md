@@ -49,6 +49,7 @@ To call it, alot of use of the reference manual for the STM32L43XXX Arm-based 32
 Chapter 11 is dedicated to DMA.
 ![image](https://github.com/user-attachments/assets/92524a20-0b7f-43c3-9426-117782597d2a)
 
+
 DMA works by;
 1. The DMA is configures at it's channel level, composed of a sequence of AHB bus transfers.
 2. To transfer, a peripheral sends a single DMA request to the DMA controller.
