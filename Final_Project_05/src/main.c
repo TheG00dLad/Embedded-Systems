@@ -1,26 +1,85 @@
-// This example uses Timer 15 to trigger ADC conversions on channel 5 (PA0)
-// The ADC data is saved to a circular buffer in RAM using DMA
+/*******************************************************************************
+* Pin Configuration (Based on Setup and Peripheral Initialization)
+********************************************************************************
+*   Microcontroller: STM32L432KC (Nucleo-L432KC board assumed)
+*
+*   Analog I/O :
+*     PA5: ADC1_IN5        - Analog Audio Input
+*     PA4: DAC1_OUT1       - Analog Audio Output
+*
+
+*
+*   Rotary Encoder:
+*     - TIM2 Channel Pins: Configured within initEncoder() library function.
+*                          Commonly PA0/PA1 or PA15/PB3 or PA8/PA9.
+*                          *** WARNING: PA0 is used by ADC1_IN5 in this code. ***
+*                          Ensure encoder library or hardware uses different pins (e.g., PA8/PA9).
+*     - PB4: GPIO Input     - Encoder Push Button (with internal Pull-Up enabled)
+*     - PA13: SWDIO         - Serial Wire Debug IO
+*     - PA14: SWCLK         - Serial Wire Debug Clock
+*     - PB3: SWO           - Serial Wire Output (Optional Trace Output)
+*   LCD Display (SPI):
+*     - SPI Pins (SCK, MOSI): Configured within init_display() library function.
+*                              Likely SPI1 (e.g., PA5/PA7 or PB3/PB5) or SPI3.
+*     - Control Pins (CS, DC, RST): Configured within init_display(). Specific
+*                                  GPIO pins depend on library & wiring.
+*   Serial Debug (USART2):
+*     PA2: USART2_TX       - Transmit Data (to PC via ST-Link VCOM)
+*     PA1: USART2_RX       - (Likely unused, ST-Link VCOM RX)
+*     PA7
+*     PA6
+*     PA8
+*     PA12
+*   Miscellaneous GPIO:
+*     PA3: GPIO Output      - Purpose currently unspecified in main logic.
+*
+*   Trigger Timers:
+*     - Timer 15 (TIM15): Used to trigger ADC conversions (Internal TRGO signal).
+*     - Timer 7 (TIM7): Used to trigger DAC conversions (Internal TRGO signal).
+*
+*   DMA Requests:
+*     - DMA1 Channel 1: Triggered by ADC1 conversion complete.
+*     - DMA1 Channel 3: Triggered by TIM7 TRGO (routed via DAC request).
+*
+*   System/Debug:
+*     - NRST: Reset Pin
+*******************************************************************************/
 
 #include <eeng1030_lib.h>
 #include <stdio.h>
 #include <errno.h>
 #include <sys/unistd.h> // STDOUT_FILENO, STDERR_FILENO
 #include <stdbool.h>
-#include <echo.h>
+#include <echo.h> 
 #include <display.h>
 #include <string.h>
 #include <dma_integration.h>
 
 //#define SAMPLE_RATE 88200     // Sampling rate (samples per second)
-#define DELAY_SECONDS 0.25    // Desired echo delay time in seconds
-//#define BUFFER_SIZE (7500) // Calculate buffer size based on delay
-#define ECHO_DECAY 0.6f       // Echo decay factor (0.0 to < 1.0) - Use 'f' for float
+#define DELAY_SECONDS 0.5    // Desired distortion delay time in seconds
 #define SCREEN_WIDTH 160
 #define SCREEN_HEIGHT 80
 #define HEADER_HEIGHT 30
 #define ENCODER_MAX 159
-#define BUFFER_SIZE 4000
+#define BUFFER_SIZE 3950
+#define distortion_BUFFER_SIZE BUFFER_SIZE // Use the same size for simplicity, or make it larger for longer delays
+#define MIN_DELAY_SAMPLES 10         // Minimum distortion delay in samples (must be > 0)
+#define MAX_DELAY_SAMPLES (distortion_BUFFER_SIZE - 1) // Max delay limited by buffer size
+#define distortion_DECAY 1f       // distortion decay factor (0.0 to < 1.0) - Use 'f' for float
+#define distortion_DECAY_FIXED_Q8 153 // (uint8_t)(0.6f * 256.0f)
+#define distortion_DECAY_SHIFT 8      // The amount to shift back
+// --- Fixed-point parameters for decay calculation ---
+#define distortion_DECAY_SHIFT 8      // Q-format shifter (e.g., 8 for Q8)
+// Maximum decay factor in Q8 format (e.g., 230/256 is approx 0.9, safely below 1.0)
+#define MAX_DECAY_VALUE_Q8 230
 
+// --- FIX: Set a fixed delay time for the distortion ---
+#define FIXED_distortion_DELAY_SAMPLES (distortion_BUFFER_SIZE / 2) // Example: delay is 1/2 of the buffer size
+
+// Buffer to store past samples for distortion effect
+volatile uint16_t distortion_history_buffer[distortion_BUFFER_SIZE];
+// Write index for the distortion history buffer
+volatile uint32_t distortion_write_index = 0;
 // Define two buffers: one for ADC input, one for DAC output
 volatile uint16_t adc_buffer[BUFFER_SIZE];
 volatile uint16_t dac_buffer[BUFFER_SIZE];
@@ -36,18 +95,18 @@ void delay(volatile uint32_t dly);
 void initEncoder(void);
 void settings(void);
 
+
 uint16_t ADC_Buffer[16];
 volatile bool recordingDone = false;  // Flag to indicate recording completion
 volatile uint32_t bufferIndex = 0;         // Write index
 volatile uint32_t playbackIndex = 0;
 volatile uint32_t milliseconds;
 int count;
-volatile int mode = 0;                          // Current operating mode (0=Passthrough, 1=Echo, etc.)
-volatile uint16_t audioBuffer[BUFFER_SIZE];     // Circular buffer for echo delay
+volatile int mode = 0;                          // Current operating mode (0=Passthrough, 1=Volume, 2=distortion)
+volatile uint16_t audioBuffer[BUFFER_SIZE];     // Circular buffer for distortion delay (if needed differently than history)
 volatile uint32_t bufferWriteIndex = 0;         // Index where new samples are written
 volatile int percent_int = 0; // Percentage of the dial position;
 volatile int vol_con;
-uint16_t echoBuffer[BUFFER_SIZE];
 uint32_t writeIndex = 0;
 
 int main()
@@ -67,17 +126,10 @@ int main()
 
     drawRectangle(0,0,159,79,RGBToWord(255,0,0));
     dial_background = RGBToWord(255,255,255);
-    fillRectangle(0,0,160,80,dial_background);    
+    fillRectangle(0,0,160,80,dial_background);
     dial_x = dial_oldx = 0;
-    //uint32_t encoderValue = TIM2->CNT;
     setup();
-    //readADC(10); // not really a read, just sets up channel etc.
 
-    // while(1)
-    // {        
-    // //printf("ADC->DR=%04d ",ADC1->DR);                    
-    // //printf("ADC_Buffer[0]=%04d\r\n",ADC_Buffer[0]);     
-    // }
     while (1)
     {
         uint16_t current_count = TIM2->CNT;
@@ -113,7 +165,7 @@ int main()
                 // Fill rest of screen
                 fillRectangle(0, HEADER_HEIGHT, SCREEN_WIDTH, SCREEN_HEIGHT - HEADER_HEIGHT, dial_background);
                 // Draw text in header
-                printTextX2("Echo", 40, 10, (255), RGBToWord(255, 230, 128));
+                printTextX2("Distortion", 40, 10, (255), RGBToWord(255, 230, 128)); // Changed text
                 // Draw bar below header
                 rect_y = HEADER_HEIGHT + 10;
                 uint16_t width_now = (dial_x + 1 > SCREEN_WIDTH) ? SCREEN_WIDTH : (dial_x + 1);
@@ -146,12 +198,12 @@ int main()
             // printf("Encoder Button Released!\r\n");
             previous_button_state = current_button_reading; // Record as released (1)
         }
-        
+
         //-------------------------------------------------------------------------------------
         if (dial_x != dial_oldx)
         {
             // --- Incremental Update Logic ---
-            if (dial_x > dial_oldx) 
+            if (dial_x > dial_oldx)
             {
                 // === Value INCREASED ===
                 // The bar needs to grow. Fill the *newly added* segment with the foreground color.
@@ -160,7 +212,7 @@ int main()
                 uint16_t start_x = dial_oldx + 1;
                 uint16_t segment_width = dial_x - dial_oldx;
                 // Ensure calculations don't go out of bounds (though unlikely here)
-                if (start_x < SCREEN_WIDTH && segment_width > 0) 
+                if (start_x < SCREEN_WIDTH && segment_width > 0)
                 {
                 // Make sure drawing doesn't exceed screen width
                 if (start_x + segment_width > SCREEN_WIDTH) {
@@ -170,7 +222,7 @@ int main()
                     fillRectangle(start_x, rect_y, segment_width, rect_height, rect_colour);
                 }
                 }
-            } 
+            }
             else { // dial_x < dial_oldx
                 // === Value DECREASED ===
                 // The bar needs to shrink. Fill the *removed* segment with the background color.
@@ -204,6 +256,9 @@ void setup()
     SysTick->CTRL = SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_ENABLE_Msk; // Enable SysTick, Processor clock
     SysTick->VAL = 0;
 
+    memset((void*)distortion_history_buffer, 0, sizeof(distortion_history_buffer));
+    distortion_write_index = 0; // Start writing at the beginning
+
     // Enable global interrupts AFTER configuring SysTick if delay_ms is needed early
     __enable_irq(); // Use CMSIS standard function
     // __asm(" cpsie i "); // Or use inline assembly
@@ -218,7 +273,10 @@ void setup()
     DMA1_Channel1->CNDTR = BUFFER_SIZE;     // Number of data transfers
     DMA1_Channel1->CPAR = (uint32_t)(&(ADC1->DR)); // Peripheral address (ADC data register)
     DMA1_Channel1->CMAR = (uint32_t)adc_buffer;   // Memory address (adc_buffer)
-    DMA1_CSELR->CSELR &= ~(DMA_CSELR_C1S);       // Select ADC1 trigger (0000) for DMA1 Channel 1
+    // --- IMPORTANT: FIX DMA MUX FOR ADC1 ---
+    // ADC1 is request 5 on L432KC. Setting to 0 selects MEM2MEM.
+    DMA1_CSELR->CSELR &= ~(DMA_CSELR_C1S);       // Clear current selection
+    DMA1_CSELR->CSELR |= (5 << DMA_CSELR_C1S_Pos); // Select ADC1 (request 5) for DMA1 Channel 1
     DMA1_Channel1->CCR = (DMA_CCR_MINC |    // Memory increment mode
                           DMA_CCR_CIRC |    // Circular mode
                           DMA_CCR_PSIZE_0 | // Peripheral size 16-bit
@@ -235,7 +293,7 @@ void setup()
     DMA1_Channel3->CPAR = (uint32_t)(&(DAC1->DHR12R1)); // Peripheral address (DAC data holding register) - Use DAC1
     DMA1_Channel3->CMAR = (uint32_t)dac_buffer;   // Memory address (dac_buffer)
     DMA1_CSELR->CSELR &= ~(DMA_CSELR_C3S);       // Clear selection for Channel 3
-    DMA1_CSELR->CSELR |= (0b0110 << DMA_CSELR_C3S_Pos); // Select DAC channel 1 trigger (request 6)
+    DMA1_CSELR->CSELR |= (6 << DMA_CSELR_C3S_Pos); // Select DAC channel 1 trigger (request 6) - Correct
     DMA1_Channel3->CCR = (DMA_CCR_MINC |    // Memory increment mode
                           DMA_CCR_CIRC |    // Circular mode
                           DMA_CCR_DIR |     // Direction: Read from memory
@@ -248,42 +306,46 @@ void setup()
     NVIC_SetPriority(DMA1_Channel1_IRQn, 1); // Set interrupt priority
     NVIC_EnableIRQ(DMA1_Channel1_IRQn);      // Enable the interrupt
 
-    pinMode(GPIOA,5,3);  // PA5 = analog mode (ADC in)
-    pinMode(GPIOA,4,3);  // PA4 = analog mode (DAC out)
-   
+    pinMode(GPIOA,0,3);  // PA0 = analog mode (ADC1_IN5)
+    pinMode(GPIOA,4,3);  // PA4 = analog mode (DAC1_OUT1)
+
     //----------------------------------------------------------
-    pinMode(GPIOA, 3, 1); // Configure PA3 as Output (mode 1)
-    pinMode(GPIOB,4,0);
-    enablePullUp(GPIOB,4);  
     
+    pinMode(GPIOB,4,0);   // PB4 as Input (for encoder button)
+    enablePullUp(GPIOB,4); // Enable pull-up for the button
+
     initADC();
     initDAC();
     initTimer15();
     initTimer7();
     init_display();
     initEncoder();
-    settings();
-    __enable_irq();
+    __enable_irq(); // Enable interrupts globally *AFTER* all peripheral setup
 }
 
 void initSerial(uint32_t baudrate)
 {
-    RCC->AHB2ENR |= (1 << 0); // make sure GPIOA is turned on
-    pinMode(GPIOA,2,2); // alternate function mode for PA2
+    RCC->AHB2ENR |= RCC_AHB2ENR_GPIOAEN; // make sure GPIOA is turned on
+    pinMode(GPIOA,2,2); // alternate function mode for PA2 (USART2 TX)
     selectAlternateFunction(GPIOA,2,7); // AF7 = USART2 TX
 
-    RCC->APB1ENR1 |= (1 << 17); // turn on USART2
+    RCC->APB1ENR1 |= RCC_APB1ENR1_USART2EN; // turn on USART2 clock
 
-	const uint32_t CLOCK_SPEED=80000000;    
+	const uint32_t CLOCK_SPEED=80000000; // Assuming HCLK = 80 MHz
 	uint32_t BaudRateDivisor;
-	
-	BaudRateDivisor = CLOCK_SPEED/baudrate;	
-	USART2->CR1 = 0;
+
+	// For oversampling by 16 (default), USARTDIV = HCLK / BaudRate
+	BaudRateDivisor = CLOCK_SPEED / baudrate;
+
+	USART2->CR1 = 0; // Disable USART first
 	USART2->CR2 = 0;
-	USART2->CR3 = (1 << 12); // disable over-run errors
-	USART2->BRR = BaudRateDivisor;
-	USART2->CR1 =  (1 << 3);  // enable the transmitter
-	USART2->CR1 |= (1 << 0);
+	USART2->CR3 = 0; // No hardware flow control, etc.
+    // USART2->CR3 |= USART_CR3_OVRDIS; // Disable overrun detection if needed
+
+	USART2->BRR = BaudRateDivisor; // Set baud rate
+
+	USART2->CR1 |= USART_CR1_TE;  // Enable Transmitter
+	USART2->CR1 |= USART_CR1_UE;  // Enable USART
 }
 int _write(int file, char *data, int len)
 {
@@ -292,209 +354,164 @@ int _write(int file, char *data, int len)
         errno = EBADF;
         return -1;
     }
-    while(len--)
-    {
-        eputc(*data);    
-        data++;
-    }    
-    return 0;
+    // Transmit data using polling
+    for (int i = 0; i < len; i++) {
+        eputc(data[i]);
+    }
+    return len; // Return number of chars written
 }
 void eputc(char c)
 {
-    while( (USART2->ISR & (1 << 6))==0); // wait for ongoing transmission to finish
-    USART2->TDR=c;
-}       
-
-// void initADC()
-// {
-//     // initialize the ADC
-//     RCC->AHB2ENR |= (1 << 13); // enable the ADC
-//     RCC->CCIPR |= (1 << 29) | (1 << 28); // select system clock for ADC
-//     ADC1_COMMON->CCR = ((0b01) << 16) + (1 << 22) ; // set ADC clock = HCLK and turn on the voltage reference
-//     // start ADC calibration    
-//     ADC1->CR=(1 << 28); // turn on the ADC voltage regulator and disable the ADC
-//     delay_ms(1); // wait for voltage regulator to stabilize (20 microseconds according to the datasheet).  This gives about 180microseconds
-//     ADC1->CR |= (1<< 31);
-//     while(ADC1->CR & (1 << 31)); // wait for calibration to finish.
-//     ADC1->CFGR = (1 << 31); // disable injection
-//     ADC1->CFGR |= (1 << 11); // enable external trigger
-//     ADC1->CFGR &= ~(1 << 10);
-//     ADC1->CFGR |= (0b1110 << 6); // select EXT14 (Timer 15) as trigger
-//     ADC1->CFGR |= (1 << 12); // enable Over run of ADC results
-//     ADC1->CFGR |= (1 << 1) + (1 << 0);
-//     //ADC1_COMMON->CCR |= (0x0f << 18);
-
-
-
-// }
-// int readADC(int chan)
-// {
-
-//     ADC1->SQR1 |= (chan << 6);
-//     ADC1->ISR =  (1 << 3); // clear EOS flag
-//     ADC1->CR |= (1 << 0); // enable the ADC
-//     while ( (ADC1->ISR & (1 <<0))==0); // wait for ADC to be ready
-//     ADC1->CR |= (1 << 2); // start conversion
-//     /*while ( (ADC1->ISR & (1 <<3))==0); // wait for conversion to finish
-//     ADC1->CR &= ~(1 << 0); // disable the ADC
-//     */
-//     return ADC1->DR; // return the result
-// }
+    // Wait for Transmit Data Register Empty flag
+    while( !(USART2->ISR & USART_ISR_TXE) );
+    USART2->TDR = c; // Send char
+}
 
 void SysTick_Handler(void)
-{    
-    milliseconds++;
-}
-//    uint32_t encoderValue = TIM2->CNT;
-//      if (mode == 0) {
-//         // Mode 0: Passthrough
-//         // uint16_t adcValue = readADC(10);
-//         // writeDAC(adcValue);
-//      }
-//     if (mode == 1) {
-//         // Mode 1: Volume Control
-//         float volume = (float)encoderValue / ENCODER_MAX;
-//         uint16_t adcValue = readADC(10);
-//         uint16_t adjustedValue = (uint16_t)((float)adcValue*volume);
-//         if (adjustedValue > 4095) adjustedValue = 4095;
-//         writeDAC(adjustedValue);
-//     }
-//  if (mode == 2) {
-//         // Mode 2: Echo Effect
-//         uint32_t delay = (encoderValue * 2000) / ENCODER_MAX; // scale delay to max 2000 samples
-//         uint32_t readIndex = (writeIndex + BUFFER_SIZE - delay) % BUFFER_SIZE;
-//         uint16_t input = readADC(10);
-//         uint16_t echo = echoBuffer[readIndex];
-//         uint32_t output = (input + echo) / 2;
-//         if (output > 4095) output = 4095;
-//         echoBuffer[writeIndex] = input;
-//         writeIndex = (writeIndex + 1) % BUFFER_SIZE;
-//         writeDAC((uint16_t)output);
-//     }
-
-//#define BUFFER_SIZE 256
-//uint16_t ADC_Buffer[BUFFER_SIZE];
-uint16_t Adjusted_Buffer[BUFFER_SIZE];
-
-void settings()
 {
-    uint32_t encoderValue = TIM2->CNT;
-    if (mode==0)
-    {
-        //Passthrough mode
-        
-
-    }
-    else if (mode == 1)
-{
-    float volume = (float)encoderValue / ENCODER_MAX;
-    for (int i = 0; i < BUFFER_SIZE; i++) {
-        Adjusted_Buffer[i] = (uint16_t)((float)ADC_Buffer[i] * volume);
-    }
+    milliseconds++; // Used for delay_ms()
 }
 
-    else if (mode==2)
-    {
-       // DMA1_Channel1->CMAR = (uint32_t);
-    }
-}
-#define DELAY_SAMPLES 32
 void process_adc_data(uint32_t start_index, uint32_t length)
 {
-    if (mode == 0)
+    if (mode == 0) // Passthrough Mode
     {
-        // Passthrough mode - Directly copy ADC data to DAC buffer
-        // Consider using memcpy for potential speedup if length is large
-        // memcpy((void*)&dac_buffer[start_index], (void*)&adc_buffer[start_index], length * sizeof(uint16_t));
-        for (uint32_t i = 0; i < length; ++i)
-        {
-            dac_buffer[start_index + i] = adc_buffer[start_index + i];
-        }
+        // Directly copy ADC data to DAC buffer
+        memcpy((void*)&dac_buffer[start_index], (const void*)&adc_buffer[start_index], length * sizeof(uint16_t));
+        // for (uint32_t i = 0; i < length; ++i)
+        // {
+        //     dac_buffer[start_index + i] = adc_buffer[start_index + i];
+        // }
     }
-    else if (mode == 1)
+    else if (mode == 1) // Volume Control Mode
     {
-        // --- READ ENCODER VALUE *ONCE* ---
-        uint16_t current_encoder_val = TIM2->CNT;
+        // --- READ ENCODER VALUE *ONCE* per processing block ---
+        uint16_t current_encoder_val = TIM2->CNT; // Read current encoder count
 
-        // --- FIXED-POINT VOLUME ---
-        // Scale encoder value to a 16-bit fractional representation (0 to 65535)
-        // Use 32-bit intermediate to avoid overflow during calculation
-        uint32_t volume_fixed = ((uint32_t)current_encoder_val * 65536) / (ENCODER_MAX + 1); // +1 to allow reaching full scale slightly easier
-        if (volume_fixed > 65535) volume_fixed = 65535; // Clamp to max
+        // --- FIXED-POINT VOLUME (Q16 format: 0x0000 to 0xFFFF maps to 0.0 to ~1.0) ---
+        // Scale encoder value [0, ENCODER_MAX] to [0, 65535]
+        uint32_t volume_fixed = ((uint32_t)current_encoder_val * 65536) / (ENCODER_MAX + 1); // Use 32-bit intermediate
+        if (volume_fixed > 65535) volume_fixed = 65535; // Clamp to max Q16 value
 
         uint32_t temp_val; // Use 32-bit for intermediate multiplication
 
         for (uint32_t i = 0; i < length; ++i)
         {
-            // Multiply ADC value (12-bit) by volume (16-bit fixed-point)
-            temp_val = (uint32_t)adc_buffer[start_index + i] * volume_fixed;
+            uint16_t current_sample = adc_buffer[start_index + i]; // Get sample from ADC buffer
 
-            // Result is 28-bit (12 + 16). Shift right by 16 bits to get the scaled 12-bit result.
-            dac_buffer[start_index + i] = (uint16_t)(temp_val >> 16);
+            // Multiply ADC value (assume 12-bit, 0-4095) by volume (16-bit fixed-point, Q16)
+            temp_val = (uint32_t)current_sample * volume_fixed;
 
-            // Optional clamping (less likely needed with fixed point if scaling is right)
-            if (dac_buffer[start_index + i] > 4095) {
-               dac_buffer[start_index + i] = 4095;
+            // Result is potentially 28-bit (12 + 16). Shift right by 16 bits to scale back to 12-bit range.
+            uint16_t processed_sample = (uint16_t)(temp_val >> 16);
+
+            // Clamp to valid DAC range (0 to 4095 for 12-bit DAC)
+            if (processed_sample > 4095) {
+               processed_sample = 4095;
             }
+            dac_buffer[start_index + i] = processed_sample; // Write processed sample to DAC buffer
         }
     }
-    else if (mode == 2) // Echo mode
+    else if (mode == 2) // distortion Mode (Encoder controls Decay/Feedback)
     {
-        // *** Your Echo implementation needs to be added here ***
-        // Placeholder: Simple attenuation (as before)
-         const uint32_t delay = (DELAY_SAMPLES < BUFFER_SIZE) ? DELAY_SAMPLES : BUFFER_SIZE - 1;
-         if (delay == 0) {
-             for (uint32_t i = 0; i < length; ++i) {
-                dac_buffer[start_index + i] = adc_buffer[start_index + i] / 2; // Simple passthrough/attenuation
-             }
-             return;
+        // --- Read encoder and calculate DYNAMIC decay factor *ONCE* per chunk ---
+        uint16_t encoder_value = TIM2->CNT;
+        uint32_t dynamic_decay_fixed_q8; // Variable for the decay factor (Q8 format)
+
+        // Map encoder value [0, ENCODER_MAX] to decay factor [0, MAX_DECAY_VALUE_Q8]
+        if (ENCODER_MAX > 0) {
+             // Scale encoder value to Q8 range [0, 230]
+             dynamic_decay_fixed_q8 = ((uint32_t)encoder_value * MAX_DECAY_VALUE_Q8) / ENCODER_MAX;
+        } else {
+             dynamic_decay_fixed_q8 = 0; // Default to no feedback if ENCODER_MAX is 0
         }
 
-        // --- EXAMPLE ECHO LOGIC (Needs refinement based on your exact goal) ---
-        // This simple echo mixes current input with a delayed sample from adc_buffer itself.
-        // A separate echo buffer is usually better for decaying echo.
-        for (uint32_t i = 0; i < length; ++i) {
-            uint32_t current_abs_index = start_index + i;
-            // Calculate the index to read the delayed sample from *within the current processing chunk*
-            // This requires careful handling of buffer wrap-around if delay > length
-            // A simpler approach often uses a separate, larger circular buffer for the delay line.
+        // --- Use the FIXED delay time ---
+        const uint32_t delay_in_samples = FIXED_distortion_DELAY_SAMPLES;
 
-            // Simplified example (likely incorrect for true echo effect across buffer halves):
-            // uint32_t read_abs_index = (current_abs_index + BUFFER_SIZE - delay) % BUFFER_SIZE; // WRONG FOR HALF-BUFFER PROCESSING
-
-            // Let's stick to simple attenuation for now until echo logic is designed
-             dac_buffer[start_index + i] = adc_buffer[start_index + i] / 2; // Replace with actual echo
+        // --- Ensure fixed delay is valid (safety check - IMPORTANT) ---
+        // Delay must be > 0 and < distortion_BUFFER_SIZE
+        if (delay_in_samples >= distortion_BUFFER_SIZE || delay_in_samples == 0) {
+             // Invalid delay setting! Fallback to passthrough to avoid errors.
+             memcpy((void*)&dac_buffer[start_index], (const void*)&adc_buffer[start_index], length * sizeof(uint16_t));
+             // Optionally print an error message here (if printf is safe within ISR context, usually not recommended)
+             // printf("Warning: Invalid distortion delay!\r\n");
+             return; // Skip distortion processing for this chunk
         }
-         // Proper echo needs state maintained across calls (writeIndex, potentially separate echo buffer)
-         // This function processes chunks, making direct circular buffer access complex within it.
+
+
+        // --- Variables for the loop ---
+        uint16_t current_sample;
+        uint16_t delayed_sample;
+        uint32_t output_sample_temp; // Use 32-bit for intermediate addition
+        uint32_t read_index;
+        uint32_t decayed_sample_fixed; // Use 32-bit for intermediate multiplication
+
+        // --- Process samples in the chunk ---
+        for (uint32_t i = 0; i < length; ++i)
+        {
+            // 1. Get current sample from ADC buffer
+            current_sample = adc_buffer[start_index + i];
+
+            // 2. Calculate read index for the delayed sample using the FIXED delay
+            // Modulo arithmetic handles buffer wrap-around
+            read_index = (distortion_write_index + distortion_BUFFER_SIZE - delay_in_samples) % distortion_BUFFER_SIZE;
+
+            // 3. Get delayed sample from history buffer
+            delayed_sample = distortion_history_buffer[read_index];
+
+            // 4. Calculate the feedback term using DYNAMIC FIXED-POINT decay (Q8)
+            // Multiply delayed sample (12-bit) by decay factor (Q8) -> Result is Q8
+            decayed_sample_fixed = (uint32_t)delayed_sample * dynamic_decay_fixed_q8;
+            // Shift right by shift amount (8) to scale back to integer range
+            uint16_t decayed_sample = (uint16_t)(decayed_sample_fixed >> distortion_DECAY_SHIFT);
+
+            // 5. Mix current sample with the decayed delayed sample
+            output_sample_temp = (uint32_t)current_sample + decayed_sample;
+
+            // 6. Clamp output to valid DAC range (0-4095)
+            if (output_sample_temp > 4095) {
+                output_sample_temp = 4095;
+            }
+            // Write final sample to the DAC output buffer
+            dac_buffer[start_index + i] = (uint16_t)output_sample_temp;
+
+            // 7. Store *current* input sample into history buffer for future echoes
+            distortion_history_buffer[distortion_write_index] = current_sample;
+
+            // 8. Advance history buffer write index (circularly)
+            distortion_write_index = (distortion_write_index + 1) % distortion_BUFFER_SIZE;
+        }
     }
 }
+
 void DMA1_Channel1_IRQHandler(void)
 {
-    uint32_t isr_flags = DMA1->ISR; // Read flags once for efficiency
+    uint32_t isr_flags = DMA1->ISR; // Read DMA1 interrupt status register
 
-    // Check for Half Transfer complete interrupt flag
+    // Check for Half Transfer complete interrupt flag for Channel 1
     if ((isr_flags & DMA_ISR_HTIF1) != 0)
     {
         DMA1->IFCR = DMA_IFCR_CHTIF1; // Clear the Half Transfer flag for Channel 1
-        process_adc_data(0, BUFFER_SIZE / 2); // Process the first half
+        process_adc_data(0, BUFFER_SIZE / 2); // Process the first half of the buffer
     }
 
-    // Check for Transfer Complete interrupt flag
+    // Check for Transfer Complete interrupt flag for Channel 1
     if ((isr_flags & DMA_ISR_TCIF1) != 0)
     {
         DMA1->IFCR = DMA_IFCR_CTCIF1; // Clear the Transfer Complete flag for Channel 1
-        process_adc_data(BUFFER_SIZE / 2, BUFFER_SIZE / 2); // Process the second half
+        process_adc_data(BUFFER_SIZE / 2, BUFFER_SIZE / 2); // Process the second half of the buffer
     }
 
-    // Optional: Check for Transfer Error flag
+    // Optional: Check for Transfer Error flag for Channel 1
     if ((isr_flags & DMA_ISR_TEIF1) != 0)
     {
          DMA1->IFCR = DMA_IFCR_CTEIF1; // Clear the Transfer Error flag
-         // Handle error, e.g., toggle an LED or print error
-         printf("!!! ADC DMA Error (Ch1) !!!\r\n");
+         // Handle error, e.g., toggle an LED or print error (use printf cautiously in ISR)
+         // Consider setting a global error flag checked in main loop instead
+         // printf("!!! ADC DMA Error (Ch1) !!!\r\n");
     }
 
-    // Clear the Global Interrupt flag - often redundant if specific flags cleared, but safe
-     DMA1->IFCR = DMA_IFCR_CGIF1;
+    // Clear the Global Interrupt flag - Might be redundant if specific flags cleared, but safe practice
+    // DMA1->IFCR = DMA_IFCR_CGIF1; // Already cleared by clearing specific flags HTIF1, TCIF1, TEIF1
 }

@@ -21,83 +21,8 @@ void process_adc_data(uint32_t start_index, uint32_t length);
 void DMA1_Channel1_IRQHandler(void); // Declare the ISR
 void delay_us(uint32_t us); // Ensure delay_us is declared if used
 
-// --- Main ---
-// int main()
-// {
-
-//     initADC(); // Initializes ADC for PA5 (Channel 10) triggered by TIM15
-//     // readADC(10); // REMOVED: This call is misleading/ineffective in DMA mode.
-//                  // The channel is set permanently in initADC's SQR1.
-//     initDAC();     // Initialize DAC before starting timers
-//     initTimer15(); // Configure & Start Timer15 to trigger ADC conversions
-//     initTimer7();  // Configure & Start Timer7 to trigger DAC conversions
-
-//     // The core work is now done by DMA and the ISR.
-//     // Main loop can monitor or do other tasks.
-//     while (1)
-//     {
-//         // Display the most recent raw ADC value received (from buffer start)
-//         printf("Most recent raw ADC value (Ch10): %04d | Processed DAC value: %04d\r\n",
-//                adc_buffer[0], dac_buffer[0]);
-//         delay_ms(200); // Slow down printf rate
-//     }
-// }
-
-// --- Setup ---
-// void setup()
-// {
-//     initClocks();
-//     SysTick->LOAD = (80000000 / 1000) - 1; // Configure SysTick for 1ms delay_ms (if lib relies on it)
-//     SysTick->CTRL = SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_ENABLE_Msk; // Enable SysTick, Processor clock
-//     SysTick->VAL = 0;
-
-//     // Enable global interrupts AFTER configuring SysTick if delay_ms is needed early
-//     __enable_irq(); // Use CMSIS standard function
-//     // __asm(" cpsie i "); // Or use inline assembly
-
-//     RCC->AHB2ENR |= RCC_AHB2ENR_GPIOAEN | RCC_AHB2ENR_GPIOBEN; // enable GPIOA and GPIOB
-//     initSerial(9600); // Or higher like 115200
-
-//     RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN; // enable DMA1
-
-//     // ADC DMA (Channel 1) - Writes to adc_buffer
-//     DMA1_Channel1->CCR = 0;                 // Disable channel to configure
-//     DMA1_Channel1->CNDTR = BUFFER_SIZE;     // Number of data transfers
-//     DMA1_Channel1->CPAR = (uint32_t)(&(ADC1->DR)); // Peripheral address (ADC data register)
-//     DMA1_Channel1->CMAR = (uint32_t)adc_buffer;   // Memory address (adc_buffer)
-//     DMA1_CSELR->CSELR &= ~(DMA_CSELR_C1S);       // Select ADC1 trigger (0000) for DMA1 Channel 1
-//     DMA1_Channel1->CCR = (DMA_CCR_MINC |    // Memory increment mode
-//                           DMA_CCR_CIRC |    // Circular mode
-//                           DMA_CCR_PSIZE_0 | // Peripheral size 16-bit
-//                           DMA_CCR_MSIZE_0 | // Memory size 16-bit
-//                           DMA_CCR_PL_1 |    // Priority High
-//                           DMA_CCR_HTIE |    // Half Transfer interrupt enable
-//                           DMA_CCR_TCIE);    // Transfer Complete interrupt enable
-//                                             // DIR=0 (Peri->Mem) default
-//     DMA1_Channel1->CCR |= DMA_CCR_EN;       // Enable DMA Channel 1
-
-//     // DAC DMA (Channel 3) - Reads from dac_buffer
-//     DMA1_Channel3->CCR = 0;                 // Disable channel to configure
-//     DMA1_Channel3->CNDTR = BUFFER_SIZE;     // Number of data transfers
-//     DMA1_Channel3->CPAR = (uint32_t)(&(DAC1->DHR12R1)); // Peripheral address (DAC data holding register) - Use DAC1
-//     DMA1_Channel3->CMAR = (uint32_t)dac_buffer;   // Memory address (dac_buffer)
-//     DMA1_CSELR->CSELR &= ~(DMA_CSELR_C3S);       // Clear selection for Channel 3
-//     DMA1_CSELR->CSELR |= (0b0110 << DMA_CSELR_C3S_Pos); // Select DAC channel 1 trigger (request 6)
-//     DMA1_Channel3->CCR = (DMA_CCR_MINC |    // Memory increment mode
-//                           DMA_CCR_CIRC |    // Circular mode
-//                           DMA_CCR_DIR |     // Direction: Read from memory
-//                           DMA_CCR_PSIZE_0 | // Peripheral size 16-bit (for DHR12R1)
-//                           DMA_CCR_MSIZE_0 | // Memory size 16-bit
-//                           DMA_CCR_PL_1);    // Priority High
-//     DMA1_Channel3->CCR |= DMA_CCR_EN;       // Enable DMA Channel 3
-
-//     // Enable DMA1 Channel 1 Interrupt in NVIC
-//     NVIC_SetPriority(DMA1_Channel1_IRQn, 1); // Set interrupt priority
-//     NVIC_EnableIRQ(DMA1_Channel1_IRQn);      // Enable the interrupt
-// }
 
 
-// --- ADC Initialization (Corrected for PA5 / Channel 10) ---
 void initADC()
 {
     // -- Clocks and Pin Configuration --
