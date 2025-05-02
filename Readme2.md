@@ -34,7 +34,8 @@ A rotary encoder is commonly found on car radios.
 It provides a very simple and intuitive left-right directions, as well as a tertiary function on a button press.
 It is an electromechanical device that rotates the rotational motion of a shaft into a clock signal.
 Matching the signal against a reference clock, it will be capable of providing information of position, speed and direction.
-This project will only use position and direction, as the sensitivity is not as fine as it would need to be to desire the use of speed.
+This project will utilize the encoder's direction and position information, which can set parameters.
+While speed can be derived, it was deemed uncessary due to the lack of fine sensitivity in the settings.
 The rotary encoder, as it uses TIM2, is therefore not using any CPU polling, which allows for greater effiency.
 ## DMA
 Direct Memory Access (DMA) is a feature in microcontrollers or computers that allows either peripherals, or memory, to transfer to another place without any CPU involvement.
@@ -83,13 +84,13 @@ On the code, we use half the buffer to render the ADC in, and the other half to 
 Expensive models of microcontrollers have double buffering enabled.
 
 For the STM32L432kc there is no double buffering, and a faux verision of the double buffering refered to as "ping-pong" buffering was used.
-It uses the buffers halves enabled by DMA interrupts [insert dma interrupts part]
+It uses the buffers halves enabled by DMA interrupts.
 The goal is seamless audio flow.
 To do this, the ADC needs to be triggered at a fixed rate, set by timer 15.
 Then timer 7 is set to this same rate, and it triggers the DAC continuously.
 There is also time needed to process the data, which has to be done on the CPU.
 Trying to process data from the same memory buffer the ADC is writing to and the DAC is reading lead to the DMA overwriting the data before anything could happen.
-The code seperates the buffer, treating it as two halves, the adc_buffer, and the dac_buffer.
+The code seperates the buffer, treating it as two halves of the buffers, the adc_buffer and the dac_buffer.
 The DMA and CPU can work alternately then.
 The process works by the DMA filling the first half, and then triggers a Half Transfer Interupt, which is triggered by the buffer being half filled.
 ![image](https://github.com/user-attachments/assets/a4cad1db-c646-4e20-9043-4d5723aacf26)
@@ -105,12 +106,26 @@ It also read the DAC and ADC, and could display any features yet to be implement
 It substituted the LCD display as a way of measuring position.
 
 ## Timers
-The timers on the ADC and DAC, using DMA, allowed for it to sample data far faster, by setting the timer to 800Khz, it was able to accurately visualise a sine wave at above 100KHz. However there was interference, but it was above the audible range, as it was at around 1 MHz.
-
+The timers on the ADC and DAC, using DMA, allowed for it to sample data far faster, by setting the timer to 800Khz, it was able to accurately visualise a sine wave at above 100KHz. 
+However, there was interference, but it was above the audible range, as it was at around 1 MHz.
+This is quite possible just swithing noise or artifacts left on the scope due to the high frequency components.
+It should be noted the ADC and DAC may not be able to sample at that speed, it was simply the fastest speed attained through use of the oscillscope to see how accurate and how fast I could read a signal.
 
 
 ## Testing
-The circuit was able to be tested under different enviroments
+The circuit was able to be tested under different enviroments.
+By testing a sinewave at 3.3V, and raising the volume, measure, it could go from no output to a full repeat of the wave, and was visible on the oscilloscope.
+The below image demonstrates the volume attenuation.
+![image](https://github.com/user-attachments/assets/e2efdbb6-5527-457a-8a6b-44bad039b912)
+
+To test the distortion effect, it was given the same treatment, however the distortion lead to clipping as it started to try sum sinewaves.
+There was a problem that without a variable that stated "if (audio > 4096); audio = 4096".
+This stopped the DAC outputting 0 when it went too high on the input.
+The passthrough was testing though simple visually inspecting the oscilloscope.
+Below shows the waveform flattening out, aswell as the slightly larger waveform compared to a simple volume control passthrough.
+![image](https://github.com/user-attachments/assets/b2449089-24c6-44ba-938c-036850e729fd)
+
+
 ## Debugging
 There we some notable issues in the debugging process. An interrupt in the delay_ms combined with the DMA caused the code to crash inside the delay.
 This would happen in the while loop, as the asm("wfi") interrupt was never triggered. 
@@ -129,9 +144,13 @@ This made for a simple use of breakpoint, and demonstrated it's usefulness.
 The the final major bug found in the project was when the DMA was outputting what looked to be "the average part of a waveform".
 It demonstrated clear interference with any waveform, and had this unique jumping to a certain level of the output displayed on the oscilloscope.
 ![image](https://github.com/user-attachments/assets/83a753c2-a2ca-4df3-a3f2-297ad5673c4a)
+
 This image is what happened when a triangle wave was put through.
 Changing the size of the buffer made the distance between the lines more seperate in the oscilloscope.
 This was due to the use of a float to remember the position of the rotary encoder.
+
+![image](https://github.com/user-attachments/assets/40e85352-d6ac-41e8-924f-d1980def1e6a)
+This image was the same effect upon a sinewave, but with a larger buffer size.
 Floating point operations would be called constantly in the loop, required computational power which slowed down the output greater.
 Switching the value of the volume multiplier to use fixed point arithmetic provided a far greater performance boost.
 This was then able to be used for the distortion effect too, as the encoder could easily set a value without causing any further errors.
