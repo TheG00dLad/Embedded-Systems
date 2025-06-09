@@ -321,6 +321,7 @@ void setup()
     init_display();
     initEncoder();
     __enable_irq(); // Enable interrupts globally *AFTER* all peripheral setup
+    pinMode(GPIOA, 4, 3);
 }
 
 void initSerial(uint32_t baudrate)
